@@ -1,0 +1,6 @@
+wp-config.php
+/misc
+/wp-content/themes/greaterworks/js/hashgrid.js
+/wp-content/themes/greaterworks/css/hashgrid.css
+/wp-content/themes/greaterworks/css/style.less
+.htaccess
