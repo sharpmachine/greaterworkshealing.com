@@ -1,11 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="http://greaterworkshealing.com/wp-content/plugins/google-sitemap-generator/sitemap.xsl"?><!-- generator="wordpress/3.2.1" -->
 <!-- sitemap-generator-url="http://www.arnebrachhold.de" sitemap-generator-version="3.2.6" -->
-<!-- generated-on="October 3, 2011 6:43 am" -->
+<!-- generated-on="November 22, 2011 10:23 am" -->
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">	<url>
 		<loc>http://greaterworkshealing.com/</loc>
-		<lastmod>2011-06-12T21:14:26+00:00</lastmod>
+		<lastmod>2011-11-15T16:44:23+00:00</lastmod>
 		<changefreq>daily</changefreq>
 		<priority>1.0</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/2011/11/renewing-mind-part-2/</loc>
+		<lastmod>2011-11-22T18:23:20+00:00</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.2</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/2011/10/renewing-mind-part-1/</loc>
+		<lastmod>2011-11-22T18:23:13+00:00</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.2</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/events/</loc>
+		<lastmod>2011-11-02T16:22:04+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/2011/10/call-higher-life/</loc>
+		<lastmod>2011-10-12T15:42:27+00:00</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.2</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/2011/10/faith/</loc>
+		<lastmod>2011-10-12T15:41:11+00:00</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.2</priority>
 	</url>
 	<url>
 		<loc>http://greaterworkshealing.com/2011/07/the-substance-of-faith/</loc>
@@ -94,12 +124,6 @@
 	<url>
 		<loc>http://greaterworkshealing.com/giving/</loc>
 		<lastmod>2011-06-14T23:51:51+00:00</lastmod>
-		<changefreq>weekly</changefreq>
-		<priority>0.6</priority>
-	</url>
-	<url>
-		<loc>http://greaterworkshealing.com/events/</loc>
-		<lastmod>2011-06-14T04:36:18+00:00</lastmod>
 		<changefreq>weekly</changefreq>
 		<priority>0.6</priority>
 	</url>
