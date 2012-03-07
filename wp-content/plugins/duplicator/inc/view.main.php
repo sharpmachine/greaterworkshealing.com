@@ -12,6 +12,11 @@
 	$email_me_enabled    = $GLOBALS['duplicator_opts']['email-me'] == "0" 	 	 ? false : true;
 	$duplicator_dbiconv	 = $GLOBALS['duplicator_opts']['dbiconv'] == "0" 		 ? false : true;
 	
+	
+	function duplicator_get_download_link() {
+		return get_home_url(null, '', is_ssl() ? 'https' : 'http') . '/' . DUPLICATOR_SSDIR_NAME . '/' ;
+	}
+	
 ?>
 
 <script type="text/javascript">
@@ -43,12 +48,16 @@
 			
 			Duplicator.downloadPackage = function(btn) {
 				jQuery(btn).css('background-color', '#dfdfdf');
-				window.location = '<?php echo get_home_url(null, '', is_ssl() ? 'https' : 'http') . '/' . DUPLICATOR_SSDIR_NAME . '/' ; ?>' + btn.id;
+				window.location = '<?php echo duplicator_get_download_link(); ?>' + btn.id;
 			}
 			
 			Duplicator.downloadInstaller = function(btn) {
 				jQuery(btn).css('background-color', '#dfdfdf');
-				window.location='<?php echo DUPLICATOR_PLUGIN_URL .'files/install.php?download' ?>'
+				window.location='<?php echo DUPLICATOR_PLUGIN_URL .'files/install.php?download'; ?>'
+			}
+			
+			Duplicator.startCreate = function() {
+				jQuery('span#span-status').html("Evaluating WordPress Setup. Please Wait...");
 			}
 			
 			/*  ============================================================================
@@ -68,8 +77,7 @@
 			}
 			jQuery("#dialog-options").dialog( {autoOpen:false, height:610, width:750, create:Duplicator._dlgCreate, close:Duplicator._dlgClose });
 			jQuery("#dialog-log-copy").dialog({autoOpen:false, height:600, width:700, create:Duplicator._dlgCreate, close:Duplicator._dlgClose });
-			
-			
+				
 
 			/*  ============================================================================
 			LOG PANE: 
@@ -130,15 +138,18 @@
 			Duplicator.optionsOpen  = function() {jQuery("div#dialog-options").dialog("open");}
 			Duplicator.optionsClose = function() {jQuery('div#dialog-options').dialog('close');}
 			
+			/* Row Details */
+			Duplicator.toggleDetail = function(id) {
+				jQuery('#' + id).toggle();
+				return false;
+			}
 			
 			//MISC
 			jQuery("div#div-render-blanket").show();
 			Duplicator.newWindow = function(url) {window.open(url);}
-			
 		});
 	});
 </script>
-
 
 
 <!-- ==========================================
@@ -149,10 +160,10 @@ MAIN FORM: Lists all the backups 			-->
 		
 		<!-- TOOLBAR -->
 		<table border="0" id="toolbar-table">
-			<tr>
-				<td style="white-space:nowrap"><label>Package Name:</label></td>
-				<td style="white-space:nowrap;width:100%"><input name="package_name" type="text" style="width:250px" value="<?php echo $package_name ?>" maxlength="40" /></td>
-				<td><input type="submit" id="btn-create-pack" class="btn-create-pack"value="..." name="submit" title="Create Package" /></td>
+			<tr valign="top">
+				<td style="white-space:nowrap; vertical-align:middle"><label style="font-size:14px !important;">Package Name:</label></td>
+				<td style="white-space:nowrap;width:100%; vertical-align:middle"><input name="package_name" type="text" style="width:250px" value="<?php echo $package_name ?>" maxlength="40" /></td>
+				<td><input type="submit" id="btn-create-pack" class="btn-create-pack" value="..." name="submit" title="Create Package" onclick="Duplicator.startCreate()" ondblclick="javascript:return void(0);" /></td>
 				<td><input type="button" id="btn-delete-pack" title="Delete selected package(s)"/></td>
 				<?php if ($setup_link_enabled) : ?>
 					<td align="center"><input type="button" class="btn-setup-link" onclick="window.open('<?php echo $GLOBALS['duplicator_opts']['nurl'] ?>/install.php', '_blank')" title="Launch the installer window." /></td>
@@ -164,23 +175,30 @@ MAIN FORM: Lists all the backups 			-->
 				<?php endif; ?>		
 				<td><img src="<?php echo DUPLICATOR_PLUGIN_URL ?>img/hdivider.png" style="height:26px; padding:0px 5px 0px 5px"/></td>
 				<td><input type="button" id="btn-help-dialog" onclick='Duplicator.newWindow("<?php echo DUPLICATOR_HELPLINK ?>")' title="Help..." /></td>
-				<td><input type="button" id="btn-contribute-dialog" value="Contribute" onclick='Duplicator.newWindow("<?php echo DUPLICATOR_GIVELINK ?>")' title="Contribute..." /></td>
+				<td><input type="button" id="btn-contribute-dialog" onclick='Duplicator.newWindow("<?php echo DUPLICATOR_GIVELINK ?>")' title="Partner with us..." /></td>
+				<td>
+				<a href="https://twitter.com/share" class="twitter-share-button" data-url="http://lifeinthegrid.com/duplicator" data-text="Duplicate Your Efforts! Tools for Online Entrepreneurs" data-via="lifeinthegrid" data-size="large" data-related="lifeinthegrid" data-count="none" data-hashtags="Duplicator">Tweet</a>
+				<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+				</td>
 			</tr>
 		</table>
 
 		<!-- STATUS 
 		id comes from wp-themes: major-publishing-actions  keeps themeing correct -->
-		<table width="100%" class="widefat" cellspacing="0" border="1">
-			<thead>
-				<tr>
-				<th>
+		<table width="100%"  class="widefat pack-table" cellspacing="0" border="1">
+			<tr>
+				<td width="100%" style="font-size:14px; vertical-align:middle">
 					<b>Status:</b> 
 					<span id="span-status">Ready to create new package.</span>
 					<img id="img-status-error" src="<?php echo DUPLICATOR_PLUGIN_URL ?>img/error.png" style="height:16px; width:16px; display:none; margin-top:3px; margin:0px" valign="bottom" />
 					<img id="img-status-progress" src="<?php echo DUPLICATOR_PLUGIN_URL ?>img/progress.gif" style="height:10px; width:46px; display:none" />
-				</th>
-				</tr>
-			</thead>
+				</td>
+				<?php if($total_elements!=0)  :	?>
+					<td style="white-space:nowrap;">
+						<input type="button" id="duplicator-installer" value="Installer" class="btn-save-packitem" onclick="Duplicator.downloadInstaller(this)" title="Download this installer" />
+					</td>
+				<?php endif; ?>	
+			</tr>
 		</table><div style="height:5px"></div>
 		
 		
@@ -194,25 +212,41 @@ MAIN FORM: Lists all the backups 			-->
 					<th title="Server time when package was created">Created</th>
 					<th title="Compressed size of the package">Size</th>
 					<th title="The name of the package" style="width:100%">Package Name</th>
-					<th title="Files need to duplicate your site" style="text-align:center;" >Downloads</th>
+					<th title="Your database and WordPress files." style="text-align:center;" >Package</th>
 				</tr>
 			</thead>
 			<?php
-			if($total_elements!=0)  {
-				$ct=0;
-				while($ct<$total_elements) {
-					$row=$result[$ct];
+			if($total_elements != 0)  {
+				$ct = 0;
+				$token_len = (DUPLICATOR_SECURE_TOKEN_LEN + 5);
+				while($ct < $total_elements) {
+					$row	   = $result[$ct];
+					$settings  = unserialize($row['settings']);
+					$detail_id = "duplicator-detail-row-{$ct}";
+					$packname  = empty($row['packname']) ? $row['zipname'] : $row['packname'];
 					?>
-					<tr>
+					<tr class="pack-information">
 						<td><input name="delete_confirm" type="checkbox" id="<?php echo $row['zipname'];?>" onclick="Duplicator.rowColor(this)" /></td>
-						<td style="cursor:help;white-space:nowrap;" title="created with: version <?php echo $row['ver_plug'];?>"><?php echo $row['bid'];?>&nbsp;  </td>
-						<td style="white-space:nowrap;"><?php echo $row['owner'];?>&nbsp;  </td>
-						<td style="white-space:nowrap;"><?php echo date( "m-d-y G:i",strtotime($row['created']));?> &nbsp; </td>
-						<td style="white-space:nowrap;"><?php echo duplicator_bytesize($row['zipsize']);?>&nbsp; </td>
-						<td><?php echo $row['zipname'];?>&nbsp;</td>
-						<td style="white-space:nowrap;">
-							<input type="button" value="Package" id="<?php echo $row['zipname'];?>" class="btn-save-packitem" onclick="Duplicator.downloadPackage(this)" title="Download this package" />&nbsp;
-							<input type="button" value="Installer" class="btn-save-packitem" onclick="Duplicator.downloadInstaller(this)" title="Download this installer" />
+						<td><a href="javascript:void(0);" onclick="return Duplicator.toggleDetail('<?php echo $detail_id ;?>');">[<?php echo $row['bid'];?>]</a></td>
+						<td><?php echo $row['owner'];?></td>
+						<td><?php echo date( "m-d-y G:i", strtotime($row['created']));?></td>
+						<td><?php echo duplicator_bytesize($row['zipsize']);?></td>
+						<td><?php echo $packname ;?></td>
+						<td><input type="button" value="Package" id="<?php echo $row['zipname'];?>" class="btn-save-packitem" onclick="Duplicator.downloadPackage(this)" title="Download this package" /></td>
+					</tr>
+					<tr>
+						<td colspan="7" id="<?php echo $detail_id; ?>" class="pack-details-row">
+							<?php 
+								$plugin_version = empty($settings['plugin_version']) ? 'unknown' : $settings['plugin_version'];
+								$secure_token   = empty($settings['secure_token'])   ? 'unknown' : $settings['secure_token'];
+								$download_link  = duplicator_get_download_link() . $row['zipname'];
+								
+								echo "<b>Plugin Version:</b> {$plugin_version} <br />" ;
+								echo "<b>Security Token:</b> {$secure_token} <br />" ;
+								echo "<b>File Name:</b> {$row['zipname']} <br />" ;
+								echo "<b>File Path:</b> " . DUPLICATOR_SSDIR_PATH . "/{$row['zipname']} <br />" ;
+								echo "<b>URL Path:</b> <a href='{$download_link}'>{$download_link}</a>"  ;
+							?>
 						</td>
 					</tr>
 					<?php
@@ -230,7 +264,7 @@ MAIN FORM: Lists all the backups 			-->
 					<th title="Server time when package was created">Created</th>
 					<th title="Compressed size of the package">Size</th>
 					<th title="The name of the package" style="width:100%">Package Name</th>
-					<th title="Files need to duplicate your site" style="text-align:center;" >Downloads</th>
+					<th title="Your database and WordPress files." style="text-align:center;" >Package</th>
 				</tr>
 			</tfoot>
 		</table>

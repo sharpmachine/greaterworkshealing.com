@@ -27,11 +27,11 @@ jQuery(document).ready( function($) {
 	*/
 	Duplicator.toggleToolbarState = function(state) {
 		if (state == "DISABLED") {
-			$('#toolbar-table :input').attr("disabled", "true");
-			$('#toolbar-table :input').css("background-color", "#efefef");
+			$('#toolbar-table :input, #duplicator-installer').attr("disabled", "true");
+			$('#toolbar-table :input, #duplicator-installer').css("background-color", "#efefef");
 		} else {
-			$('#toolbar-table :input').removeAttr("disabled");
-			$('#toolbar-table :input').css("background-color", "#f9f9f9");
+			$('#toolbar-table :input, #duplicator-installer').removeAttr("disabled");
+			$('#toolbar-table :input, #duplicator-installer').css("background-color", "#f9f9f9");
 		}
 	}
 	
@@ -46,6 +46,7 @@ jQuery(document).ready( function($) {
 			Duplicator.setStatus("Logging Enabled - &gt; <a href='javascript:window.location.reload()'>reload page</a> to view results.");
 			Duplicator.toggleToolbarState("ENABLED");
 		} else {
+			Duplicator.toggleToolbarState("ENABLED");
 			window.location.reload();
 		}
 	}
@@ -59,6 +60,8 @@ jQuery(document).ready( function($) {
 		$.ajax({
 			type: "POST",
 			url: ajaxurl,
+			beforeSend: function() { Duplicator.Log("<div id='duplicator-process-msg'>Processing please wait. &nbsp; This may take several minutes...</div>");},
+			complete: function() { jQuery('#duplicator-process-msg').empty()},
 			data: "package_name=" + packname +"&action=duplicator_create",
 			success: function(data){Duplicator.reload(data);},
 			error:   function(data){ 
@@ -158,7 +161,7 @@ jQuery(document).ready( function($) {
 				url: ajaxurl,
 				data: "duplicator_delid="+list+"&action=duplicator_delete",
 				success: function(data){ 
-					if (data.indexOf("log:act.duplicator_unlink=>removed") != -1) {
+					if (data.indexOf("log:act__unlink=>removed") != -1) {
 						Duplicator.reload(data);
 					} else {
 						var msg = data + "\nlog:ajax.event-delete=>Error while deleting backup. File may not exsist.\n<br/>";
@@ -204,8 +207,18 @@ jQuery(document).ready( function($) {
 				var size = $('input.dir-size:last').val();
 				var msgDetails = "Uncompressed Size:  " + size + "\nName:  " + packname  ;
 
+				//Invalid file		
+				if (data.indexOf("log:act__system_check=>reserved-file") != -1)	{
+					var validate_msg = "WARNING:\nA reserved file was found in the WordPress root directory.\n";
+					validate_msg 	+= "The Duplicator uses the following reserved file names:\n\n";
+					validate_msg 	+= "install.php, install-data.sql, and install-log.txt\n\n";
+					validate_msg 	+= "In order to archive your data correctly please remove any of\n";
+					validate_msg 	+= "these reserved files from your WordPress root directory.\n";
+					validate_msg 	+= "Then try creating a your package again."
+					alert(validate_msg);
+					return false;
 				//Overwrite	Message			
-				if (data.indexOf("log:act.duplicator_system_check=>overwrite") != -1)	{
+				} else if (data.indexOf("log:act__system_check=>overwrite") != -1)	{
 					var validate_msg = "Package name already exists! Overwrite with newer package?\n\n" + msgDetails;
 
 					if (confirm(validate_msg)) {
@@ -213,9 +226,10 @@ jQuery(document).ready( function($) {
 						Duplicator.overwrite(packname);
 					} else {
 						Duplicator.Log("Action canceled, logging complete.<br/>\n", true);
+						Duplicator.setStatus("Ready to create new package.");
 					}
 				//Size Limit
-				} else if (data.indexOf("log:act.duplicator_system_check=>size_limit") != -1) {
+				} else if (data.indexOf("log:act__system_check=>size_limit") != -1) {
 					alert('2GB archive size reached!  Currently the Duplicator only\nsupports achieving sites under 2GB.  We are currently\nworking on this limitation in future releases.\n\nYou can easily overcome this limitation by temporarily\nmoving large files outside of your root WordPress directory.\nOnce you have created your package and installed it you can\nthen move those files back to the same location.');
 					Duplicator.setStatus("2GB Size limit reached!");
 					return false
@@ -227,6 +241,7 @@ jQuery(document).ready( function($) {
 						Duplicator.createPackage($("input[name=package_name]").val(), $("#email-me").is(':checked'));
 					} else {
 						Duplicator.Log("Action canceled, logging complete.<br/>\n", true);
+						Duplicator.setStatus("Ready to create new package.");
 					}
 				}
 			},

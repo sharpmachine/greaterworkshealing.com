@@ -24,7 +24,7 @@
 					<span style=" font-style:italic; font-size:11px">(usefull on large sites)</span><br/>
 					<br/>
 					
-					<input type="checkbox" name="dbiconv" id="dbiconv" <?php echo ($duplicator_dbiconv) ? 'checked="checked"' : ''; ?> /> <label for="dbiconv">Enable database character encoding</label>&nbsp; 
+					<input type="checkbox" name="dbiconv" id="dbiconv" <?php echo ($duplicator_dbiconv) ? 'checked="checked"' : ''; ?> /> <label for="dbiconv">Enable database encoding</label>&nbsp; 
 					<span style=" font-style:italic; font-size:11px">(recommended)</span><br/>
 					<br/>
 					
@@ -43,8 +43,8 @@
 					
 					<table width="100%" border="0">
 						<tr>
-							<td style="width:50%">Max Execution Time: <input type="text" name="max_time" id="max_time" value="<?php echo $max_time_val ?>" <?php echo $max_read_only ?> maxlength="4" style="width:75px" /> seconds</td>
-							<td style="width:50%">Max Memory Limit: <input type="text" name="max_memory" id="max_memory" value="<?php echo preg_replace('/\D/', '', $GLOBALS['duplicator_opts']['max_memory'] ) ?>" maxlength="3" style="width:40px" /> MB <i style='font-size:11px'>(minimum 128)</i></td>
+							<td style="width:50%">Max Time: <input type="text" name="max_time" id="max_time" value="<?php echo $max_time_val ?>" <?php echo $max_read_only ?> maxlength="4" style="width:75px" /> seconds</td>
+							<td style="width:50%">Max Memory: <input type="text" name="max_memory" id="max_memory" value="<?php echo preg_replace('/\D/', '', $GLOBALS['duplicator_opts']['max_memory'] ) ?>" maxlength="4" style="width:45px" /> MB <i style='font-size:11px'>(minimum 128)</i></td>
 						</tr>
 					</table><br/>
 					
@@ -80,6 +80,7 @@
 						</tr>
 					</table>
 				</fieldset>
+				<i style='font-size:10px'>Having issues saving these options?  Temporarily disable all "Object Caches" (i.e. W3C Total Object Cache).</i>
 				</div>
 			</div>
 			
@@ -98,7 +99,7 @@
 					</table>
 				</fieldset><br/>
 			
-				<fieldset style="height:160px">
+				<fieldset style="height:190px">
 					<legend>Database Defaults</legend>
 					<table width="100%" border="0" cellspacing="5" cellpadding="5">
 					<tr>
@@ -119,24 +120,24 @@
 					</tr>
 					</table>
 				</fieldset>
-				<i style="font-size:11px">The installer can have these fields pre-filled with these optional settings.  These values are only applied to packages after the data is saved.</i>
+				<i style="font-size:11px">The installer can have these fields pre-filled with these optional settings.  These values are only applied to packages after the data is saved and a package is created.</i>
 			</div>
 			<!--div id="tabs-opts-3">
 					FTP in Version 1.1
 					<table width="100%" border="0" cellspacing="5" cellpadding="5">
 					<tr>
 						<td style="width:130px">Host</td>
-						<td><input type="text" name="ftp-host" id="ftp-host" value="<?php echo $GLOBALS['duplicator_opts']['ftp-host'] ?>"  style="width:300px" /></td>
+						<td><input type="text" name="ftp-host" id="ftp-host" value="<?php //echo $GLOBALS['duplicator_opts']['ftp-host'] ?>"  style="width:300px" /></td>
 						<td>Port</td>
-						<td><input type="text" name="ftp-port" id="ftp-port" value="<?php echo $GLOBALS['duplicator_opts']['ftp-port'] ?>" style="width:60px" /></td>
+						<td><input type="text" name="ftp-port" id="ftp-port" value="<?php //echo $GLOBALS['duplicator_opts']['ftp-port'] ?>" style="width:60px" /></td>
 					</tr>
 					<tr>
 						<td style="white-space:nowrap">User Name</td>
-						<td colspan="3"><input type="text" name="ftp-user" id="ftp-user" value="<?php echo $GLOBALS['duplicator_opts']['ftp-user'] ?>"  class="txt-settings"/></td>
+						<td colspan="3"><input type="text" name="ftp-user" id="ftp-user" value="<?php //echo $GLOBALS['duplicator_opts']['ftp-user'] ?>"  class="txt-settings"/></td>
 					</tr>
 					<tr>
 						<td style="white-space:nowrap">Password</td>
-						<td colspan="3"><input type="password" name="ftp-pass" id="ftp-pass" value="<?php echo $GLOBALS['duplicator_opts']['ftp-pass'] ?>"  class="txt-settings"/></td>
+						<td colspan="3"><input type="password" name="ftp-pass" id="ftp-pass" value="<?php //echo $GLOBALS['duplicator_opts']['ftp-pass'] ?>"  class="txt-settings"/></td>
 					</tr>
 					</table>
 			</div>
@@ -147,51 +148,59 @@
 			TAB 3 SYSTEM -->
 			<div id="tabs-opts-3">		
 				Key:
-				<span class="dup-test-good" style="padding:10px">Good</span>
-				<span class="dup-test-ok" style="padding:10px">OK</span>
-				<span class="dup-test-bad" style="padding:10px">Bad</span><br/><hr size="1" />
+				<span class="dup-test-good" style="padding:10px">Good <sup>[1]</sup></span>
+				<span class="dup-test-ok" style="padding:10px">OK <sup>[0]</sup></span>
+				<span class="dup-test-bad" style="padding:10px">Bad <sup>[-1]</sup></span><br/><hr size="1" />
 				
 				<div style="line-height:24px">
 				<b>SERVER CHECKS</b> <br/>
 				PHP Version: 
 				<?php if (phpversion() >= 5.3): ?>
-					<span class="dup-test-good"><?php echo phpversion(); ?></span>
+					<span class="dup-test-good"><?php echo phpversion(); ?> <sup>[1]</sup></span>
 				<?php elseif (phpversion() >= 5.2): ?>
-					<span class="dup-test-ok"><?php echo phpversion(); ?></span> <i style="font-size:11px">(5.3+ is highly recommended. 5.2.17+ is required)</i>
+					<span class="dup-test-ok"><?php echo phpversion(); ?> <sup>[0]</sup></span> <i style="font-size:11px">(5.3+ is highly recommended. 5.2.17+ is required)</i>
 				<?php else: ?> 
-					<span class="dup-test-bad"><?php echo phpversion(); ?> </span>
+					<span class="dup-test-bad"><?php echo phpversion(); ?> <sup>[-1]</sup></span>
 				<?php endif; ?>
 				<br />
 				
 				 Web Server: 
 				<?php if (stristr($_SERVER['SERVER_SOFTWARE'], 'apache') !== false): ?>
-					<span class="dup-test-good">Apache</span>
+					<span class="dup-test-good">Apache <sup>[1]</sup></span>
 				<?php elseif (stristr($_SERVER['SERVER_SOFTWARE'], 'LiteSpeed') !== false): ?> 
-					<span class="dup-test-ok">Lite Speed</span>
+					<span class="dup-test-ok">Lite Speed <sup>[0]</sup></span>
 				<?php elseif (stristr($_SERVER['SERVER_SOFTWARE'], 'nginx') !== false): ?> 
-					<span class="dup-test-ok">nginx</span>
+					<span class="dup-test-ok">nginx <sup>[0]</sup></span>
 				<?php elseif (stristr($_SERVER['SERVER_SOFTWARE'], 'lighttpd') !== false): ?> 
-					<span class="dup-test-ok">lighttpd</span>
+					<span class="dup-test-ok">lighttpd <sup>[0]</sup></span>
 				<?php elseif (stristr($_SERVER['SERVER_SOFTWARE'], 'iis') !== false): ?> 
-					<span class="dup-test-ok">Microsoft IIS</span>
+					<span class="dup-test-ok">Microsoft IIS <sup>[0]</sup></span>
 				<?php else: ?>
-					<span>Not detected</span>
-				<?php endif; ?>
-				<br />
+					<span>Not detected <sup>[-1]</sup></span>
+				<?php endif; ?>	<br />
 				
 				Safe Mode: 
 				<?php if (stristr($safe_value, 'on')): ?>
-					<span class="dup-test-bad">On</span>
+					<span class="dup-test-bad">On <sup>[-1]</sup></span>
 				<?php else: ?>
-					<span class="dup-test-good">Off</span>
-				<?php endif; ?>
-					<br />
+					<span class="dup-test-good">Off <sup>[1]</sup></span>
+				<?php endif; ?>	<br />
 				
-			    	Compression:
-				<?php if (class_exists('ZipArchive')): ?>
-					<span class="dup-test-good">Pass</span>
+				
+				Open Base Dir: 
+				<?php 
+				$open_basedir_set = ini_get("open_basedir");
+				if (empty($open_basedir_set)): ?>
+					<span class="dup-test-good">Not Enabled <sup>[1]</sup></span>
 				<?php else: ?>
-					<span class="dup-test-bad">Not installed</span>
+					<span class="dup-test-ok">Enabled <sup>[0]</sup></span> <i style="font-size:11px">(contact your host to temporarily disable)</i>
+				<?php endif; ?>	<br />
+				
+			    Compression:
+				<?php if (class_exists('ZipArchive')): ?>
+					<span class="dup-test-good">Pass <sup>[1]</sup></span>
+				<?php else: ?>
+					<span class="dup-test-bad">Not installed <sup>[-1]</sup></span>
 				<?php endif; ?>
 				<i style="font-size:11px">(ZipArchive extension required for compression)</i>
 				<br /><br />
@@ -215,7 +224,7 @@
 					<span class="dup-test-good">Cache Directory Not Found</span>
 				<?php endif; ?>
 				<br /><br /><hr size="1"/>
-				It is highly recommended to exclude all cache store directories.  This will help for a faster and cleaner install.
+				It is highly recommended to exclude all cache store directories. <br/> This will help for a faster and cleaner install.
 				
 			
 				<!--FTP functions:
