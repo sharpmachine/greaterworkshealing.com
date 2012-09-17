@@ -1,6 +1,7 @@
 <?php
 /**
 ** Akismet Filter
+** Akismet API: http://akismet.com/development/api/
 **/
 
 add_filter( 'wpcf7_spam', 'wpcf7_akismet' );
@@ -20,7 +21,10 @@ function wpcf7_akismet( $spam ) {
 	$fes = wpcf7_scan_shortcode();
 
 	foreach ( $fes as $fe ) {
-		if ( ! isset( $fe['name'] ) || ! is_array( $fe['options'] ) )
+		if ( ! isset( $fe['name'] ) || ! isset( $_POST[$fe['name']] ) )
+			continue;
+
+		if ( ! is_array( $fe['options'] ) )
 			continue;
 
 		if ( preg_grep( '%^akismet:author$%', $fe['options'] ) ) {
@@ -55,7 +59,8 @@ function wpcf7_akismet( $spam ) {
 	$c['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
 	$c['referrer'] = $_SERVER['HTTP_REFERER'];
 
-	$c['comment_type'] = 'contactform7';
+	// http://blog.akismet.com/2012/06/19/pro-tip-tell-us-your-comment_type/
+	$c['comment_type'] = 'contact-form';
 
 	if ( $permalink = get_permalink() )
 		$c['permalink'] = $permalink;

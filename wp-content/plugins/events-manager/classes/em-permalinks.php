@@ -27,12 +27,30 @@ if( !class_exists('EM_Permalinks') ){
 			if( !defined('EM_LOCATIONS_SLUG') ){ define('EM_LOCATIONS_SLUG','locations'); }
 			if( !defined('EM_CATEGORY_SLUG') ){ define('EM_CATEGORY_SLUG','category'); }
 			if( !defined('EM_CATEGORIES_SLUG') ){ define('EM_CATEGORIES_SLUG','categories'); }
+			add_filter('post_type_archive_link',array('EM_Permalinks','post_type_archive_link'),10,2);
 		}
 		
 		function flush(){
 			global $wp_rewrite;
 			$wp_rewrite->flush_rules();
 			delete_option('dbem_flush_needed');
+		}
+		
+		function post_type_archive_link($link, $post_type){
+			if( $post_type == EM_POST_TYPE_EVENT ){
+				if( get_option('dbem_events_page') ){
+					$new_link = get_permalink(get_option('dbem_events_page'));
+				}
+			}
+			if( $post_type == EM_POST_TYPE_LOCATION ){
+				if( get_option('dbem_locations_page') ){
+					$new_link = get_permalink(get_option('dbem_locations_page'));
+				}
+			}
+			if( !empty($new_link) ){
+				$link = $new_link;
+			}
+			return $link;
 		}
 		
 		/**
@@ -73,32 +91,33 @@ if( !class_exists('EM_Permalinks') ){
 			if( is_object($events_page) ){
 				$events_slug = preg_replace('/\/$/', '', str_replace( trailingslashit(home_url()), '', get_permalink($events_page_id)) );
 				$events_slug = ( !empty($events_slug) ) ? trailingslashit($events_slug) : $events_slug;		
-				$em_rules[$events_slug.'(\d{4}-\d{2}-\d{2})$'] = 'index.php?pagename='.$events_slug.'&calendar_day=$matches[1]'; //event calendar date search
-				if( !get_option( 'dbem_my_bookings_page') || !is_object(get_post(get_option( 'dbem_my_bookings_page'))) ){ //only added if bookings page isn't assigned
-					$em_rules[$events_slug.'my\-bookings$'] = 'index.php?pagename='.$events_slug.'&bookings_page=1'; //page for users to manage bookings
+				$events_pagename = $events_page->post_name;
+				$em_rules[$events_slug.'(\d{4}-\d{2}-\d{2})$'] = 'index.php?pagename='.$events_pagename.'&calendar_day=$matches[1]'; //event calendar date search
+				$em_rules[$events_slug.'rss$'] = 'index.php?pagename='.$events_pagename.'&rss=1'; //rss page
+				$em_rules[$events_slug.'feed$'] = 'index.php?pagename='.$events_pagename.'&rss=1'; //compatible rss page
+				//make sure we hard-code rewrites for child pages of events, even on home page
+				$child_posts = get_posts(array('post_type'=>'page', 'post_parent'=>$events_page->ID, 'numberposts'=>0));
+				foreach($child_posts as $child_post){
+					$em_rules[$events_pagename.'/'.$child_post->post_name.'/?$'] = 'index.php?page_id='.$child_post->ID; //single event booking form with slug
 				}
-				$em_rules[$events_slug.'rss$'] = 'index.php?pagename='.$events_slug.'&rss=1'; //rss page
-				$em_rules[$events_slug.'feed$'] = 'index.php?pagename='.$events_slug.'&rss=1'; //compatible rss page
-				if( EM_POST_TYPE_EVENT_SLUG.'/' == $events_slug ){ //won't apply on homepage
-					//make sure we hard-code rewrites for child pages of events
-					$child_posts = get_posts(array('post_type'=>'page', 'post_parent'=>$events_page->ID, 'numberposts'=>0));
-					foreach($child_posts as $child_post){
-						$em_rules[$events_slug.$child_post->post_name.'/?$'] = 'index.php?page_id='.$child_post->ID; //single event booking form with slug
-					}		
-				}
+				//global links hard-coded
 				if( EM_MS_GLOBAL && !get_site_option('dbem_ms_global_events_links', true) ){
 					//MS Mode has slug also for global links
-					$em_rules[$events_slug.get_site_option('dbem_ms_events_slug',EM_EVENT_SLUG).'/(.+)$'] = 'index.php?pagename='.$events_slug.'&em_redirect=1&event_slug=$matches[1]'; //single event from subsite
+					$em_rules[$events_slug.get_site_option('dbem_ms_events_slug',EM_EVENT_SLUG).'/(.+)$'] = 'index.php?pagename='.$events_pagename.'&em_redirect=1&event_slug=$matches[1]'; //single event from subsite
 				}
 				//add redirection for backwards compatability
-				$em_rules[$events_slug.EM_EVENT_SLUG.'/(.+)$'] = 'index.php?pagename='.$events_slug.'&em_redirect=1&event_slug=$matches[1]'; //single event
-				$em_rules[$events_slug.EM_LOCATION_SLUG.'/(.+)$'] = 'index.php?pagename='.$events_slug.'&em_redirect=1&location_slug=$matches[1]'; //single location page
-				$em_rules[$events_slug.EM_CATEGORY_SLUG.'/(.+)$'] = 'index.php?pagename='.$events_slug.'&em_redirect=1&category_slug=$matches[1]'; //single category page slug
+				$em_rules[$events_slug.EM_EVENT_SLUG.'/(.+)$'] = 'index.php?pagename='.$events_pagename.'&em_redirect=1&event_slug=$matches[1]'; //single event
+				$em_rules[$events_slug.EM_LOCATION_SLUG.'/(.+)$'] = 'index.php?pagename='.$events_pagename.'&em_redirect=1&location_slug=$matches[1]'; //single location page
+				$em_rules[$events_slug.EM_CATEGORY_SLUG.'/(.+)$'] = 'index.php?pagename='.$events_pagename.'&em_redirect=1&category_slug=$matches[1]'; //single category page slug
+				//add a rule that ensures that the events page is found and used over other pages
+				$em_rules[trim($events_slug,'/').'/?$'] = 'index.php?pagename='.trim($events_pagename,'/') ;
 			}else{
 				$events_slug = EM_POST_TYPE_EVENT_SLUG;
 				$em_rules[$events_slug.'/(\d{4}-\d{2}-\d{2})$'] = 'index.php?post_type='.EM_POST_TYPE_EVENT.'&calendar_day=$matches[1]'; //event calendar date search
-				if( !get_option( 'dbem_my_bookings_page') || !is_object(get_post(get_option( 'dbem_my_bookings_page'))) ){ //only added if bookings page isn't assigned
-					$em_rules[$events_slug.'/my\-bookings$'] = 'index.php?post_type='.EM_POST_TYPE_EVENT.'&bookings_page=1'; //page for users to manage bookings
+				if( get_option('dbem_rsvp_enabled') ){
+					if( !get_option( 'dbem_my_bookings_page') || !is_object(get_post(get_option( 'dbem_my_bookings_page'))) ){ //only added if bookings page isn't assigned
+						$em_rules[$events_slug.'/my\-bookings$'] = 'index.php?post_type='.EM_POST_TYPE_EVENT.'&bookings_page=1'; //page for users to manage bookings
+					}
 				}
 				//check for potentially conflicting posts with the same slug as events
 				$conflicting_posts = get_posts(array('name'=>EM_POST_TYPE_EVENT_SLUG, 'post_type'=>'any', 'numberposts'=>0));
@@ -112,13 +131,25 @@ if( !class_exists('EM_Permalinks') ){
 					}
 				}
 			}
+			//make sure there's no page with same name as archives, that should take precedence as it can easily be deleted wp admin side
+			$em_query = new WP_Query(array('pagename'=>EM_POST_TYPE_EVENT_SLUG));
+			if( $em_query->have_posts() ){
+				$em_rules[trim(EM_POST_TYPE_EVENT_SLUG,'/').'/?$'] = 'index.php?pagename='.trim(EM_POST_TYPE_EVENT_SLUG,'/') ;
+				wp_reset_postdata();
+			}
+			//make sure there's no page with same name as archives, that should take precedence as it can easily be deleted wp admin side
+			$em_query = new WP_Query(array('pagename'=>EM_POST_TYPE_LOCATION_SLUG));
+			if( $em_query->have_posts() ){
+				$em_rules[trim(EM_POST_TYPE_LOCATION_SLUG,'/').'/?$'] = 'index.php?pagename='.trim(EM_POST_TYPE_LOCATION_SLUG,'/') ;
+				wp_reset_postdata();
+			}
 			//If in MS global mode and locations are linked on same site
 			if( EM_MS_GLOBAL && !get_site_option('dbem_ms_global_locations_links', true) ){
 				$locations_page_id = get_option ( 'dbem_locations_page' );
 				$locations_page = get_post($locations_page_id);
 				if( is_object($locations_page) ){
 					$locations_slug = preg_replace('/\/$/', '', str_replace( trailingslashit(home_url()), '', get_permalink($locations_page_id) ));
-					$em_rules[$locations_slug.'/'.get_site_option('dbem_ms_locations_slug',EM_LOCATION_SLUG).'/(.+)$'] = 'index.php?pagename='.$locations_slug.'&location_slug=$matches[1]'; //single event booking form with slug
+					$em_rules[$locations_slug.'/'.get_site_option('dbem_ms_locations_slug',EM_LOCATION_SLUG).'/(.+)$'] = 'index.php?pagename='.$locations_page->page_name.'&location_slug=$matches[1]'; //single event booking form with slug
 				}					
 			}
 			//add ical endpoint
@@ -168,7 +199,7 @@ if( !class_exists('EM_Permalinks') ){
 			global $wp_query, $wp_rewrite;
 			//check some homepage conditions
 			$events_page_id = get_option ( 'dbem_events_page' );
-			if( is_object($wp_query) && $wp_query->is_home && 'page' == get_option('show_on_front') && get_option('page_on_front') == $events_page_id ){
+			if( is_object($wp_query) && $wp_query->is_home && !$wp_query->is_posts_page && 'page' == get_option('show_on_front') && get_option('page_on_front') == $events_page_id ){
 				$wp_query->is_page = true;
 				$wp_query->is_home = false;
 				$wp_query->query_vars['page_id'] = $events_page_id;

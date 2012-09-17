@@ -12,6 +12,7 @@ class EM_Calendar extends EM_Object {
 		$calendar_array = array();
 		$calendar_array['cells'] = array();
 	 	
+		$original_args = $args;
 		$args = self::get_default_search($args);
 		$full = $args['full']; //For ZDE, don't delete pls
 		$month = $args['month']; 
@@ -129,20 +130,26 @@ class EM_Calendar extends EM_Object {
 		//Get an array of arguments that don't include default valued args
 		$link_args = self::get_link_args($args);
 
-		$previous_url = "?ajaxCalendar=1&amp;month={$month_last}&amp;year={$year_last}&amp;{$link_args}";
-		$next_url = "?ajaxCalendar=1&amp;month={$month_next}&amp;year={$year_next}&amp;{$link_args}";
+		$previous_url = "?ajaxCalendar=1&amp;mo={$month_last}&amp;yr={$year_last}&amp;{$link_args}";
+		$next_url = "?ajaxCalendar=1&amp;mo={$month_next}&amp;yr={$year_next}&amp;{$link_args}";
 		
 	 	$weekdays = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
-	   $n = 0 ;
-		while( $n < $start_of_week ) {   
+	 	if(!empty($args['full'])) {
+ 		    if( get_option('dbem_full_calendar_abbreviated_weekdays') ) $weekdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+ 			$day_initials_length =  get_option('dbem_full_calendar_initials_length');
+ 		} else {
+ 		    if ( get_option('dbem_small_calendar_abbreviated_weekdays') ) $weekdays = array('Sun','Mon','Tue','Wed','Thu','Fri','Sat');
+	 		$day_initials_length = get_option('dbem_small_calendar_initials_length');
+ 		}
+ 		
+		for( $n = 0; $n < $start_of_week; $n++ ) {   
 			$last_day = array_shift($weekdays);     
-			$weekdays[]= $last_day; 
-			$n++;
+			$weekdays[]= $last_day;
 		}
 	   
 		$days_initials_array = array();
 		foreach($weekdays as $weekday) {
-			$days_initials_array[] = self::translate_and_trim($weekday);
+			$days_initials_array[] = self::translate_and_trim($weekday, $day_initials_length);
 		} 
 		
 		$calendar_array['links'] = array( 'previous_url'=>$previous_url, 'next_url'=>$next_url);
@@ -231,6 +238,8 @@ class EM_Calendar extends EM_Object {
 				}
 			}
 		}
+		//generate a link argument string containing event search only
+		$day_link_args = self::get_link_args( array_intersect_key($original_args, EM_Events::get_post_search($args, true) ));
 		foreach($eventful_days as $day_key => $events) {
 			if( array_key_exists($day_key, $calendar_array['cells']) ){
 				//Get link title for this date
@@ -259,9 +268,15 @@ class EM_Calendar extends EM_Object {
 					}
 					if( $wp_rewrite->using_permalinks() && !defined('EM_DISABLE_PERMALINKS') ){
 						$calendar_array['cells'][$day_key]['link'] = $event_page_link.$day_key."/";
+						if( !empty($day_link_args) ){
+							$calendar_array['cells'][$day_key]['link'] .= '?'.$day_link_args;
+						}
 					}else{
 						$joiner = (stristr($event_page_link, "?")) ? "&amp;" : "?";				
 						$calendar_array['cells'][$day_key]['link'] = $event_page_link.$joiner."calendar_day=".$day_key;
+						if( !empty($day_link_args) ){
+							$calendar_array['cells'][$day_key]['link'] .= 'amp;'.$day_link_args;
+						}
 					}
 				}else{
 					foreach($events as $EM_Event){
@@ -277,11 +292,11 @@ class EM_Calendar extends EM_Object {
 	
 	function output($args = array(), $wrapper = true) {
 		//Let month and year REQUEST override for non-JS users
-		if( !empty($_REQUEST['month']) ){
-			$args['month'] = $_REQUEST['month'];
+		if( !empty($_REQUEST['mo']) || !empty($args['mo']) ){
+			$args['month'] = ($_REQUEST['mo']) ? $_REQUEST['mo']:$args['mo'];	
 		}
-		if( !empty($_REQUEST['year']) ){
-			$args['year'] = $_REQUEST['year'];
+		if( !empty($_REQUEST['yr']) || !empty($args['yr']) ){
+			$args['year'] = (!empty($_REQUEST['yr'])) ? $_REQUEST['yr']:$args['yr'];
 		}
 		$calendar_array  = self::get($args);
 		$template = (!empty($args['full'])) ? 'templates/calendar-full.php':'templates/calendar-small.php';
@@ -301,11 +316,14 @@ class EM_Calendar extends EM_Object {
 	}
 	 
 	function translate_and_trim($string, $length = 1) {
-		if(function_exists('mb_substr')){ //fix for diacritic calendar names
-			return mb_substr(__($string), 0, $length);
-		}else{ 
-    		return substr(__($string), 0, $length); 
-    	}
+	    if( $length > 0 ){
+			if(function_exists('mb_substr')){ //fix for diacritic calendar names
+			    return mb_substr(__($string,'dbem'), 0, $length, 'UTF-8');
+			}else{ 
+	    		return substr(__($string,'dbem'), 0, $length); 
+	    	}
+	    }
+	    return __($string,'dbem');
 	}  
 	
 	/**

@@ -1,11 +1,47 @@
-<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="http://greaterworkshealing.com/wp-content/plugins/google-sitemap-generator/sitemap.xsl"?><!-- generator="wordpress/3.2.1" -->
-<!-- sitemap-generator-url="http://www.arnebrachhold.de" sitemap-generator-version="3.2.6" -->
-<!-- generated-on="November 22, 2011 10:23 am" -->
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="http://greaterworkshealing.com/wp-content/plugins/google-sitemap-generator/sitemap.xsl"?><!-- generator="wordpress/3.4.1" -->
+<!-- sitemap-generator-url="http://www.arnebrachhold.de" sitemap-generator-version="3.2.8" -->
+<!-- generated-on="August 29, 2012 8:58 am" -->
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">	<url>
 		<loc>http://greaterworkshealing.com/</loc>
-		<lastmod>2011-11-15T16:44:23+00:00</lastmod>
+		<lastmod>2012-05-17T20:03:01+00:00</lastmod>
 		<changefreq>daily</changefreq>
 		<priority>1.0</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/2012/08/whats-greater-works/</loc>
+		<lastmod>2012-08-21T16:16:40+00:00</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.2</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/2012/05/praying-grave-sites/</loc>
+		<lastmod>2012-05-15T18:56:56+00:00</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.2</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/events/</loc>
+		<lastmod>2012-04-30T18:28:59+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/events/my-bookings/</loc>
+		<lastmod>2012-03-07T19:05:02+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/events/event-categories/</loc>
+		<lastmod>2012-03-07T19:05:02+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/events/event-locations/</loc>
+		<lastmod>2012-03-07T19:05:02+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.6</priority>
 	</url>
 	<url>
 		<loc>http://greaterworkshealing.com/2011/11/renewing-mind-part-2/</loc>
@@ -18,12 +54,6 @@
 		<lastmod>2011-11-22T18:23:13+00:00</lastmod>
 		<changefreq>monthly</changefreq>
 		<priority>0.2</priority>
-	</url>
-	<url>
-		<loc>http://greaterworkshealing.com/events/</loc>
-		<lastmod>2011-11-02T16:22:04+00:00</lastmod>
-		<changefreq>weekly</changefreq>
-		<priority>0.6</priority>
 	</url>
 	<url>
 		<loc>http://greaterworkshealing.com/2011/10/call-higher-life/</loc>

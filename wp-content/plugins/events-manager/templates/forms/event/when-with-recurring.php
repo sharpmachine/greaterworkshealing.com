@@ -9,48 +9,43 @@ $admin_recurring = is_admin() && $EM_Event->is_recurring();
 <!-- START recurrence postbox -->
 <div id="em-form-recurrence" class="event-form-recurrence event-form-when">
 	<p><?php _e('This is a recurring event.', 'dbem'); ?> <input type="checkbox" id="em-recurrence-checkbox" name="recurring" value="1" <?php if($EM_Event->is_recurring()) echo 'checked' ?> /></p>
-	<p>
+	<p class="em-date-range">
 		<span class="em-recurring-text"><?php _e ( 'Recurrences span from ', 'dbem' ); ?></span>
 		<span class="em-event-text"><?php _e ( 'From ', 'dbem' ); ?></span>				
-		<input id="em-date-start-loc" type="text" />
-		<input id="em-date-start" type="hidden" name="event_start_date" value="<?php echo $EM_Event->event_start_date ?>" />
+		<input class="em-date-start em-date-input-loc" type="text" />
+		<input class="em-date-input" type="hidden" name="event_start_date" value="<?php echo $EM_Event->event_start_date ?>" />
 		<span class="em-recurring-text"><?php _e('to','dbem'); ?></span>
 		<span class="em-event-text"><?php _e('to','dbem'); ?></span>
-		<input id="em-date-end-loc" type="text" />
-		<input id="em-date-end" type="hidden" name="event_end_date" value="<?php echo $EM_Event->event_end_date ?>" />
+		<input class="em-date-end em-date-input-loc" type="text" />
+		<input class="em-date-input" type="hidden" name="event_end_date" value="<?php echo $EM_Event->event_end_date ?>" />
 	</p>
 	<p>
 		<span class="em-recurring-text"><?php _e('Events start from','dbem'); ?></span>
 		<span class="em-event-text"><?php _e('Event starts at','dbem'); ?></span>
-		<input id="start-time" type="text" size="8" maxlength="8" name="event_start_time" value="<?php echo date( $hours_format, $EM_Event->start ); ?>" />
+		<input id="start-time" class="em-time-input em-time-start" type="text" size="8" maxlength="8" name="event_start_time" value="<?php echo date( $hours_format, $EM_Event->start ); ?>" />
 		<?php _e('to','dbem'); ?>
-		<input id="end-time" type="text" size="8" maxlength="8" name="event_end_time" value="<?php echo date( $hours_format, $EM_Event->end ); ?>" />
-		<?php _e('All day','dbem'); ?> <input type="checkbox" name="event_all_day" id="em-time-all-day" value="1" <?php if(!empty($EM_Event->event_all_day)) echo 'checked="checked"'; ?> />
+		<input id="end-time" class="em-time-input em-time-end" type="text" size="8" maxlength="8" name="event_end_time" value="<?php echo date( $hours_format, $EM_Event->end ); ?>" />
+		<?php _e('All day','dbem'); ?> <input type="checkbox" class="em-time-allday" name="event_all_day" id="em-time-all-day" value="1" <?php if(!empty($EM_Event->event_all_day)) echo 'checked="checked"'; ?> />
 	</p>
 	<div class="em-recurring-text">
 		<p>
 			<?php _e ( 'This event repeats', 'dbem' ); ?> 
 			<select id="recurrence-frequency" name="recurrence_freq">
 				<?php
-					$freq_options = array ("daily" => __ ( 'Daily', 'dbem' ), "weekly" => __ ( 'Weekly', 'dbem' ), "monthly" => __ ( 'Monthly', 'dbem' ) );
+					$freq_options = array ("daily" => __ ( 'Daily', 'dbem' ), "weekly" => __ ( 'Weekly', 'dbem' ), "monthly" => __ ( 'Monthly', 'dbem' ), 'yearly' => __('Yearly','dbem') );
 					em_option_items ( $freq_options, $EM_Event->recurrence_freq ); 
 				?>
 			</select>
 			<?php _e ( 'every', 'dbem' )?>
 			<input id="recurrence-interval" name='recurrence_interval' size='2' value='<?php echo $EM_Event->interval ; ?>' />
-			<span class='interval-desc' id="interval-daily-singular">
-			<?php _e ( 'day', 'dbem' )?>
-			</span> <span class='interval-desc' id="interval-daily-plural">
-			<?php _e ( 'days', 'dbem' ) ?>
-			</span> <span class='interval-desc' id="interval-weekly-singular">
-			<?php _e ( 'week on', 'dbem'); ?>
-			</span> <span class='interval-desc' id="interval-weekly-plural">
-			<?php _e ( 'weeks on', 'dbem'); ?>
-			</span> <span class='interval-desc' id="interval-monthly-singular">
-			<?php _e ( 'month on the', 'dbem' )?>
-			</span> <span class='interval-desc' id="interval-monthly-plural">
-			<?php _e ( 'months on the', 'dbem' )?>
-			</span>
+			<span class='interval-desc' id="interval-daily-singular"><?php _e ( 'day', 'dbem' )?></span>
+			<span class='interval-desc' id="interval-daily-plural"><?php _e ( 'days', 'dbem' ) ?></span>
+			<span class='interval-desc' id="interval-weekly-singular"><?php _e ( 'week on', 'dbem'); ?></span>
+			<span class='interval-desc' id="interval-weekly-plural"><?php _e ( 'weeks on', 'dbem'); ?></span>
+			<span class='interval-desc' id="interval-monthly-singular"><?php _e ( 'month on the', 'dbem' )?></span>
+			<span class='interval-desc' id="interval-monthly-plural"><?php _e ( 'months on the', 'dbem' )?></span>
+			<span class='interval-desc' id="interval-yearly-singular"><?php _e ( 'year', 'dbem' )?></span> 
+			<span class='interval-desc' id="interval-yearly-plural"><?php _e ( 'years', 'dbem' ) ?></span>
 		</p>
 		<p class="alternate-selector" id="weekly-selector">
 			<?php
