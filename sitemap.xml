@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="http://greaterworkshealing.com/wp-content/plugins/google-sitemap-generator/sitemap.xsl"?><!-- generator="wordpress/3.4.2" -->
 <!-- sitemap-generator-url="http://www.arnebrachhold.de" sitemap-generator-version="3.2.8" -->
-<!-- generated-on="September 18, 2012 9:41 am" -->
+<!-- generated-on="October 8, 2012 10:28 am" -->
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">	<url>
 		<loc>http://greaterworkshealing.com/</loc>
 		<lastmod>2012-05-17T20:03:01+00:00</lastmod>
@@ -9,7 +9,7 @@
 	</url>
 	<url>
 		<loc>http://greaterworkshealing.com/2012/08/whats-greater-works/</loc>
-		<lastmod>2012-08-21T16:16:40+00:00</lastmod>
+		<lastmod>2012-10-08T17:27:58+00:00</lastmod>
 		<changefreq>monthly</changefreq>
 		<priority>0.2</priority>
 	</url>
