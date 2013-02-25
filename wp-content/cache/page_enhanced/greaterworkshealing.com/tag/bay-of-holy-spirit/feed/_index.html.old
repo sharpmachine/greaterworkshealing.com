@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Greater Works &#187; bay of holy spirit</title>
+	<atom:link href="http://greaterworkshealing.com/tag/bay-of-holy-spirit/feed/" rel="self" type="application/rss+xml" />
+	<link>http://greaterworkshealing.com</link>
+	<description>Let the miraculous power of God flow through you</description>
+	<lastBuildDate>Thu, 06 Dec 2012 00:11:56 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>http://wordpress.org/?v=3.5.1</generator>
+		<item>
+		<title>Revival in Laramie Wyoming</title>
+		<link>http://greaterworkshealing.com/2011/07/revival-in-laramie-wyoming/?utm_source=rss&#038;utm_medium=rss&#038;utm_campaign=revival-in-laramie-wyoming</link>
+		<comments>http://greaterworkshealing.com/2011/07/revival-in-laramie-wyoming/#comments</comments>
+		<pubDate>Sun, 17 Jul 2011 14:45:27 +0000</pubDate>
+		<dc:creator>Mark Kuntz</dc:creator>
+				<category><![CDATA[Revival]]></category>
+		<category><![CDATA[bay of holy spirit]]></category>
+		<category><![CDATA[laramie]]></category>
+
+		<guid isPermaLink="false">http://greaterworkshealing.com/?p=691</guid>
+		<description><![CDATA[Last night in Laramie Wyoming God showed up in a very powerful way at Laramie Christain Center. His presence was overwhelming and very heavy. He gave a word to those in attendance that He had given Laramie to them, but &#8230; <a href="http://greaterworkshealing.com/2011/07/revival-in-laramie-wyoming/">Continue reading <span class="meta-nav">&#8594;</span></a>]]></description>
+		<wfw:commentRss>http://greaterworkshealing.com/2011/07/revival-in-laramie-wyoming/feed/</wfw:commentRss>
+		<slash:comments>3</slash:comments>
+		</item>
+	</channel>
+</rss>
+
+<!-- Performance optimized by W3 Total Cache. Learn more: http://www.w3-edge.com/wordpress-plugins/
+
+Page Caching using disk: enhanced
+
+ Served from: greaterworkshealing.com @ 2013-02-25 06:07:39 by W3 Total Cache -->
