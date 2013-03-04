@@ -163,7 +163,7 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 							<input type='hidden' name='comment_post_ID' value='837' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="9726a2830a" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="0d935d0001" /></p>					</form>
 							</div><!-- #respond -->
 				<script type="text/javascript">
 		jQuery(document).ready(function () {
@@ -285,4 +285,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-02-24 22:52:54 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-03-03 18:57:41 by W3 Total Cache -->
