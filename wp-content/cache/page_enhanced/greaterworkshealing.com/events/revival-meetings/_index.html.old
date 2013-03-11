@@ -139,13 +139,13 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="post-804" class="post-804 event type-event status-publish hentry">
 					
 					<div class="entry-content">
-						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-21bc3' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
-   		<div class='em-location-map-info' id='em-location-map-info-21bc3' style="display:none; visibility:hidden;">
+						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-6afe0' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
+   		<div class='em-location-map-info' id='em-location-map-info-6afe0' style="display:none; visibility:hidden;">
    			<div class="em-map-balloon" style="font-size:12px;">
    				<div class="em-map-balloon-content" ><strong>Laramie Christain Center</strong><br/>1953 N. 3rd St.<br /> Laramie, Wyoming<br/></div>
    			</div>
    		</div>
-		<div class='em-location-map-coords' id='em-location-map-coords-21bc3' style="display:none; visibility:hidden;">
+		<div class='em-location-map-coords' id='em-location-map-coords-6afe0' style="display:none; visibility:hidden;">
 			<span class="lat">41.3292</span>
 			<span class="lng">-105.592</span>
 		</div>
@@ -190,7 +190,7 @@ p: N/A
 							<input type='hidden' name='comment_post_ID' value='804' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="86b33850b6" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="91b3cdacab" /></p>					</form>
 							</div><!-- #respond -->
 				<script type="text/javascript">
 		jQuery(document).ready(function () {
@@ -287,11 +287,11 @@ p: N/A
 </footer>
 
 <div id="su-footer-links" style="text-align: center;"></div>		
-								<script type="text/javascript">
-									jQuery(document).ready( function($){	
-										var em_booking_doing_ajax = false;
+		<script type="text/javascript">
+			jQuery(document).ready( function($){	
+				var em_booking_doing_ajax = false;
 $('#em-booking-form').addClass('em-booking-form'); //backward compatability
-$('.em-booking-form').submit( function(e){
+$(document).on('submit', '.em-booking-form', function(e){
 	e.preventDefault();
 	var em_booking_form = $(this);
 	$.ajax({
@@ -355,9 +355,9 @@ $('.em-booking-form').submit( function(e){
 	});
 	return false;	
 });							
-									});
-								</script>
-								<script type='text/javascript' src='http://greaterworkshealing.com/?sjsl=colorbox,shopp,catalog,cart&amp;c=0&amp;ver=98239bb061a58639408323699680ad0e'></script>
+			});
+					</script>
+		<script type='text/javascript' src='http://greaterworkshealing.com/?sjsl=colorbox,shopp,catalog,cart&amp;c=0&amp;ver=98239bb061a58639408323699680ad0e'></script>
 <script type='text/javascript'>
 /* <![CDATA[ */
 var sjss = {"cp":"1","c":"$","p":"2","t":",","d":".","g":"3","nocache":"","REQUIRED_FIELD":"Your %s is required.","INVALID_EMAIL":"The e-mail address you provided does not appear to be a valid address.","MIN_LENGTH":"The %s you entered is too short. It must be at least %d characters long.","PASSWORD_MISMATCH":"The passwords you entered do not match. They must match in order to confirm you are correctly entering the password you want to use.","REQUIRED_CHECKBOX":"%s must be checked before you can proceed."};/* ]]> */
@@ -379,4 +379,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-03-03 21:25:52 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-03-07 06:38:18 by W3 Total Cache -->
