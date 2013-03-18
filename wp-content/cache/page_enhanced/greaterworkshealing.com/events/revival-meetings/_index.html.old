@@ -69,7 +69,7 @@
 <script type='text/javascript' src='http://greaterworkshealing.com/wp-includes/js/jquery/ui/jquery.ui.dialog.min.js?ver=1.9.2'></script>
 <script type='text/javascript'>
 /* <![CDATA[ */
-var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php","locationajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php?action=locations_search","firstDay":"1","locale":"en","dateFormat":"dd\/mm\/yy","ui_css":"http:\/\/greaterworkshealing.com\/wp-content\/plugins\/events-manager\/includes\/css\/ui-lightness.css","show24hours":"","is_ssl":"","bookingInProgress":"Please wait while the booking is being submitted.","tickets_save":"Save Ticket","bookingajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php","bookings_export_save":"Export Bookings","bookings_settings_save":"Save Settings","booking_delete":"Are you sure you want to delete?","bb_full":"Sold Out","bb_book":"Book Now","bb_booking":"Booking...","bb_booked":"Booking Submitted","bb_error":"Booking Error. Try again?","bb_cancel":"Cancel","bb_canceling":"Canceling...","bb_cancelled":"Cancelled","bb_cancel_error":"Cancellation Error. Try again?","txt_search":"Search","txt_searching":"Searching...","txt_loading":"Loading..."};
+var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php","locationajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php?action=locations_search","firstDay":"1","locale":"en","dateFormat":"dd\/mm\/yy","ui_css":"http:\/\/greaterworkshealing.com\/wp-content\/plugins\/events-manager\/includes\/css\/ui-lightness.css","show24hours":"0","is_ssl":"","bookingInProgress":"Please wait while the booking is being submitted.","tickets_save":"Save Ticket","bookingajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php","bookings_export_save":"Export Bookings","bookings_settings_save":"Save Settings","booking_delete":"Are you sure you want to delete?","bb_full":"Sold Out","bb_book":"Book Now","bb_booking":"Booking...","bb_booked":"Booking Submitted","bb_error":"Booking Error. Try again?","bb_cancel":"Cancel","bb_canceling":"Canceling...","bb_cancelled":"Cancelled","bb_cancel_error":"Cancellation Error. Try again?","txt_search":"Search","txt_searching":"Searching...","txt_loading":"Loading..."};
 /* ]]> */
 </script>
 <script type='text/javascript' src='http://greaterworkshealing.com/wp-content/plugins/events-manager/includes/js/events-manager.js?ver=3.5.1'></script>
@@ -139,13 +139,13 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="post-804" class="post-804 event type-event status-publish hentry">
 					
 					<div class="entry-content">
-						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-6afe0' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
-   		<div class='em-location-map-info' id='em-location-map-info-6afe0' style="display:none; visibility:hidden;">
+						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-8e8a4' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
+   		<div class='em-location-map-info' id='em-location-map-info-8e8a4' style="display:none; visibility:hidden;">
    			<div class="em-map-balloon" style="font-size:12px;">
    				<div class="em-map-balloon-content" ><strong>Laramie Christain Center</strong><br/>1953 N. 3rd St.<br /> Laramie, Wyoming<br/></div>
    			</div>
    		</div>
-		<div class='em-location-map-coords' id='em-location-map-coords-6afe0' style="display:none; visibility:hidden;">
+		<div class='em-location-map-coords' id='em-location-map-coords-8e8a4' style="display:none; visibility:hidden;">
 			<span class="lat">41.3292</span>
 			<span class="lng">-105.592</span>
 		</div>
@@ -190,7 +190,7 @@ p: N/A
 							<input type='hidden' name='comment_post_ID' value='804' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="91b3cdacab" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="2a4d55209c" /></p>					</form>
 							</div><!-- #respond -->
 				<script type="text/javascript">
 		jQuery(document).ready(function () {
@@ -379,4 +379,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-03-07 06:38:18 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-03-14 21:31:21 by W3 Total Cache -->

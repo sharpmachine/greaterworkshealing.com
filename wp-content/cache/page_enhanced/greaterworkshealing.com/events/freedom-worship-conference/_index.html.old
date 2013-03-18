@@ -69,7 +69,7 @@
 <script type='text/javascript' src='http://greaterworkshealing.com/wp-includes/js/jquery/ui/jquery.ui.dialog.min.js?ver=1.9.2'></script>
 <script type='text/javascript'>
 /* <![CDATA[ */
-var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php","locationajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php?action=locations_search","firstDay":"1","locale":"en","dateFormat":"dd\/mm\/yy","ui_css":"http:\/\/greaterworkshealing.com\/wp-content\/plugins\/events-manager\/includes\/css\/ui-lightness.css","show24hours":"","is_ssl":"","bookingInProgress":"Please wait while the booking is being submitted.","tickets_save":"Save Ticket","bookingajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php","bookings_export_save":"Export Bookings","bookings_settings_save":"Save Settings","booking_delete":"Are you sure you want to delete?","bb_full":"Sold Out","bb_book":"Book Now","bb_booking":"Booking...","bb_booked":"Booking Submitted","bb_error":"Booking Error. Try again?","bb_cancel":"Cancel","bb_canceling":"Canceling...","bb_cancelled":"Cancelled","bb_cancel_error":"Cancellation Error. Try again?","txt_search":"Search","txt_searching":"Searching...","txt_loading":"Loading..."};
+var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php","locationajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php?action=locations_search","firstDay":"1","locale":"en","dateFormat":"dd\/mm\/yy","ui_css":"http:\/\/greaterworkshealing.com\/wp-content\/plugins\/events-manager\/includes\/css\/ui-lightness.css","show24hours":"0","is_ssl":"","bookingInProgress":"Please wait while the booking is being submitted.","tickets_save":"Save Ticket","bookingajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php","bookings_export_save":"Export Bookings","bookings_settings_save":"Save Settings","booking_delete":"Are you sure you want to delete?","bb_full":"Sold Out","bb_book":"Book Now","bb_booking":"Booking...","bb_booked":"Booking Submitted","bb_error":"Booking Error. Try again?","bb_cancel":"Cancel","bb_canceling":"Canceling...","bb_cancelled":"Cancelled","bb_cancel_error":"Cancellation Error. Try again?","txt_search":"Search","txt_searching":"Searching...","txt_loading":"Loading..."};
 /* ]]> */
 </script>
 <script type='text/javascript' src='http://greaterworkshealing.com/wp-content/plugins/events-manager/includes/js/events-manager.js?ver=3.5.1'></script>
@@ -140,13 +140,13 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="post-831" class="post-831 event type-event status-publish hentry">
 					
 					<div class="entry-content">
-						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-3af77' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
-   		<div class='em-location-map-info' id='em-location-map-info-3af77' style="display:none; visibility:hidden;">
+						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-94f39' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
+   		<div class='em-location-map-info' id='em-location-map-info-94f39' style="display:none; visibility:hidden;">
    			<div class="em-map-balloon" style="font-size:12px;">
    				<div class="em-map-balloon-content" ><strong>Cornerstone Ministries Church</strong><br/>2 Belle Fourche River Rd.<br /> Moorcroft, Wyoming<br/></div>
    			</div>
    		</div>
-		<div class='em-location-map-coords' id='em-location-map-coords-3af77' style="display:none; visibility:hidden;">
+		<div class='em-location-map-coords' id='em-location-map-coords-94f39' style="display:none; visibility:hidden;">
 			<span class="lat">44.2633149</span>
 			<span class="lng">-104.95025379999998</span>
 		</div>
@@ -191,7 +191,7 @@ p: (520) 840-3835
 							<input type='hidden' name='comment_post_ID' value='831' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="6f3fa3419b" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="2c4b097032" /></p>					</form>
 							</div><!-- #respond -->
 				<script type="text/javascript">
 		jQuery(document).ready(function () {
@@ -288,11 +288,11 @@ p: (520) 840-3835
 </footer>
 
 <div id="su-footer-links" style="text-align: center;"></div>		
-								<script type="text/javascript">
-									jQuery(document).ready( function($){	
-										var em_booking_doing_ajax = false;
+		<script type="text/javascript">
+			jQuery(document).ready( function($){	
+				var em_booking_doing_ajax = false;
 $('#em-booking-form').addClass('em-booking-form'); //backward compatability
-$('.em-booking-form').submit( function(e){
+$(document).on('submit', '.em-booking-form', function(e){
 	e.preventDefault();
 	var em_booking_form = $(this);
 	$.ajax({
@@ -356,9 +356,9 @@ $('.em-booking-form').submit( function(e){
 	});
 	return false;	
 });							
-									});
-								</script>
-								<script type='text/javascript' src='http://greaterworkshealing.com/?sjsl=colorbox,shopp,catalog,cart&amp;c=0&amp;ver=98239bb061a58639408323699680ad0e'></script>
+			});
+					</script>
+		<script type='text/javascript' src='http://greaterworkshealing.com/?sjsl=colorbox,shopp,catalog,cart&amp;c=0&amp;ver=98239bb061a58639408323699680ad0e'></script>
 <script type='text/javascript'>
 /* <![CDATA[ */
 var sjss = {"cp":"1","c":"$","p":"2","t":",","d":".","g":"3","nocache":"","REQUIRED_FIELD":"Your %s is required.","INVALID_EMAIL":"The e-mail address you provided does not appear to be a valid address.","MIN_LENGTH":"The %s you entered is too short. It must be at least %d characters long.","PASSWORD_MISMATCH":"The passwords you entered do not match. They must match in order to confirm you are correctly entering the password you want to use.","REQUIRED_CHECKBOX":"%s must be checked before you can proceed."};/* ]]> */
@@ -380,4 +380,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-03-01 17:38:29 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-03-17 20:05:07 by W3 Total Cache -->
