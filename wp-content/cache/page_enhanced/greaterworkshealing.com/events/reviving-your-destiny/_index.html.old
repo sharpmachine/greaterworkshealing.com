@@ -28,20 +28,21 @@
 <link rel="alternate" type="application/rss+xml" title="Greater Works &raquo; Feed" href="http://greaterworkshealing.com/feed/" />
 <link rel="alternate" type="application/rss+xml" title="Greater Works &raquo; Comments Feed" href="http://greaterworkshealing.com/comments/feed/" />
 
-			<script type="text/javascript">//<![CDATA[
-			// Google Analytics for WordPress by Yoast v4.2.8 | http://yoast.com/wordpress/google-analytics/
-			var _gaq = _gaq || [];
-			_gaq.push(['_setAccount', 'UA-24148147-1']);
-							_gaq.push(['_trackPageview']);
-			(function () {
-				var ga = document.createElement('script');
-				ga.type = 'text/javascript';
-				ga.async = true;
-				ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-				var s = document.getElementsByTagName('script')[0];
-				s.parentNode.insertBefore(ga, s);
-			})();
-			//]]></script>
+            <script type="text/javascript">//<![CDATA[
+            // Google Analytics for WordPress by Yoast v4.3.2 | http://yoast.com/wordpress/google-analytics/
+            var _gaq = _gaq || [];
+            _gaq.push(['_setAccount', 'UA-24148147-1']);
+				            _gaq.push(['_trackPageview']);
+            (function () {
+                var ga = document.createElement('script');
+                ga.type = 'text/javascript';
+                ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(ga, s);
+            })();
+            //]]></script>
 			<link rel="alternate" type="application/rss+xml" title="Greater Works &raquo; Reviving Your Destiny Comments Feed" href="http://greaterworkshealing.com/events/reviving-your-destiny/feed/" />
 	<!-- Shopp dynamic catalog styles -->
 	<style type="text/css">
@@ -139,13 +140,13 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="post-810" class="post-810 event type-event status-publish hentry">
 					
 					<div class="entry-content">
-						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-5e7cd' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
-   		<div class='em-location-map-info' id='em-location-map-info-5e7cd' style="display:none; visibility:hidden;">
+						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-8c4fa' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
+   		<div class='em-location-map-info' id='em-location-map-info-8c4fa' style="display:none; visibility:hidden;">
    			<div class="em-map-balloon" style="font-size:12px;">
    				<div class="em-map-balloon-content" ><strong>Healing Rooms of Cottonwood</strong><br/>868 Cove Parkway, Suite 4D<br /> Cottonwood, AZ<br/></div>
    			</div>
    		</div>
-		<div class='em-location-map-coords' id='em-location-map-coords-5e7cd' style="display:none; visibility:hidden;">
+		<div class='em-location-map-coords' id='em-location-map-coords-8c4fa' style="display:none; visibility:hidden;">
 			<span class="lat">34.7235</span>
 			<span class="lng">-112.002</span>
 		</div>
@@ -165,10 +166,8 @@ p: (520) 840-3835
 
 <br/>
 <br style="clear:both" />
-<p><p><p>Two sessions only. Session 1 begins at noon to 3 PM, short break and session 2 begins at 4 to 7 PM.</p>
+<p>Two sessions only. Session 1 begins at noon to 3 PM, short break and session 2 begins at 4 to 7 PM.</p>
 <p>Contact Mark Kuntz at 520-840-3835 for further information.</p>
-</p>
-</p>
 
 																	</div><!-- .entry-content -->
 				</div><!-- #post-## -->
@@ -190,19 +189,19 @@ p: (520) 840-3835
 							<input type='hidden' name='comment_post_ID' value='810' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="fdfeba0f5e" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="f938c56f95" /></p>					</form>
 							</div><!-- #respond -->
-				<script type="text/javascript">
-		jQuery(document).ready(function () {
-			jQuery('#commentform').submit(function () {
-				_gaq.push(
-					['_setAccount', 'UA-24148147-1'],
-					['_trackEvent', 'comment', 'submit']
-				);
-			});
-		});
-	</script>
-				
+			        <script type="text/javascript">
+            jQuery(document).ready(function () {
+                jQuery('#commentform').submit(function () {
+                    _gaq.push(
+                            ['_setAccount', 'UA-24148147-1'],
+                            ['_trackEvent', 'comment', 'submit']
+                    );
+                });
+            });
+        </script>
+					
 </div><!-- #comments -->
 
 		</div><!-- #page -->
@@ -238,11 +237,11 @@ p: (520) 840-3835
 		</li></div></div><div class="feature-box"><div class="box"><li id="linkcat-2" class="widget-container widget_links"><h3 class="widget-title">Friends</h3>
 	<ul class='xoxo blogroll'>
 <li><a href="http://www.ibethel.org" title="Bill Johnson" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://www.ibethel.org']);">Bethel Church</a></li>
-<li><a href="http://www.catherinemullins.com/" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://www.catherinemullins.com/']);">Catherine Mullins</a></li>
-<li><a href="http://www.expectedendministries.com/" title="Katie Souza" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://www.expectedendministries.com/']);">Expected End Ministries</a></li>
+<li><a href="http://www.catherinemullins.com/" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://www.catherinemullins.com']);">Catherine Mullins</a></li>
+<li><a href="http://www.expectedendministries.com/" title="Katie Souza" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://www.expectedendministries.com']);">Expected End Ministries</a></li>
 <li><a href="http://healingrooms.com" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://healingrooms.com']);">Healing Rooms</a></li>
 <li><a href="http://nicholemarbach.com" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://nicholemarbach.com']);">Nichole Marbach</a></li>
-<li><a href="http://www.xpministries.org/" title="Patricia King" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://www.xpministries.org/']);">XP Ministries</a></li>
+<li><a href="http://www.xpministries.org/" title="Patricia King" target="_blank" onclick="javascript:_gaq.push(['_trackEvent','outbound-blogroll','http://www.xpministries.org']);">XP Ministries</a></li>
 
 	</ul>
 </li></div></div>
@@ -379,4 +378,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-03-15 19:53:50 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-04-07 08:26:38 by W3 Total Cache -->

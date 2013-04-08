@@ -151,23 +151,19 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 					
 					<div class="entry-content">
 						
-		<div id='gallery-1' class='gallery galleryid-116 gallery-columns-4 gallery-size-thumbnail gallery1'><script type="text/javascript">
-// <![CDATA[
-	jQuery(document).ready(function () {
-		jQuery(".gallery1 a").lightBox({captionPosition:"gallery"});		
-	});
-// ]]&gt;
-</script>
-<dl class="gallery-item">
-<dt class="gallery-icon">
-<a href="http://greaterworkshealing.com/wp-content/uploads/2011/06/layingonofhands.jpg"  title=""><img src="http://greaterworkshealing.com/wp-content/uploads/2011/06/layingonofhands-150x150.jpg" width="150" height="150" alt="" /></a>
-</dt></dl><dl class="gallery-item">
-<dt class="gallery-icon">
-<a href="http://greaterworkshealing.com/wp-content/uploads/2011/06/prayingforthesick.jpg"  title=""><img src="http://greaterworkshealing.com/wp-content/uploads/2011/06/prayingforthesick-150x150.jpg" width="150" height="150" alt="" /></a>
-</dt></dl><dl class="gallery-item">
-<dt class="gallery-icon">
-<a href="http://greaterworkshealing.com/wp-content/uploads/2011/06/teamwork.jpg"  title=""><img src="http://greaterworkshealing.com/wp-content/uploads/2011/06/teamwork-150x150.jpg" width="150" height="150" alt="" /></a>
-</dt></dl><br style="clear: both" /></div>
+		<div id='gallery-1' class='gallery galleryid-116 gallery-columns-3 gallery-size-thumbnail'><dl class='gallery-item'>
+			<dt class='gallery-icon'>
+				<a href="http://greaterworkshealing.com/photo-gallery/layingonofhands/"  title='Laying on of hands'><img width="150" height="150" src="http://greaterworkshealing.com/wp-content/uploads/2011/06/layingonofhands-150x150.jpg" class="attachment-thumbnail" alt="Laying on of hands" /></a>
+			</dt></dl><dl class='gallery-item'>
+			<dt class='gallery-icon'>
+				<a href="http://greaterworkshealing.com/photo-gallery/prayingforthesick/"  title='Praying for the sick'><img width="150" height="150" src="http://greaterworkshealing.com/wp-content/uploads/2011/06/prayingforthesick-150x150.jpg" class="attachment-thumbnail" alt="Praying for the sick" /></a>
+			</dt></dl><dl class='gallery-item'>
+			<dt class='gallery-icon'>
+				<a href="http://greaterworkshealing.com/photo-gallery/teamwork/"  title='Teamwork'><img width="150" height="150" src="http://greaterworkshealing.com/wp-content/uploads/2011/06/teamwork-150x150.jpg" class="attachment-thumbnail" alt="Teamwork" /></a>
+			</dt></dl><br style="clear: both" />
+			<br style='clear: both;' />
+		</div>
+
 																	</div><!-- .entry-content -->
 				</div><!-- #post-## -->
 
@@ -284,4 +280,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-03-31 12:39:27 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-04-07 01:04:52 by W3 Total Cache -->

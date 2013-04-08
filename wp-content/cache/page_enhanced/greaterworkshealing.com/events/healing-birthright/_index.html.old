@@ -141,13 +141,13 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="post-878" class="post-878 event type-event status-publish hentry">
 					
 					<div class="entry-content">
-						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-9b8b4' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
-   		<div class='em-location-map-info' id='em-location-map-info-9b8b4' style="display:none; visibility:hidden;">
+						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-ac225' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
+   		<div class='em-location-map-info' id='em-location-map-info-ac225' style="display:none; visibility:hidden;">
    			<div class="em-map-balloon" style="font-size:12px;">
    				<div class="em-map-balloon-content" ><strong>PMI Glory INSTITUTE</strong><br/>761 N. 17th St.<br /> St., Charles , Ill.<br/></div>
    			</div>
    		</div>
-		<div class='em-location-map-coords' id='em-location-map-coords-9b8b4' style="display:none; visibility:hidden;">
+		<div class='em-location-map-coords' id='em-location-map-coords-ac225' style="display:none; visibility:hidden;">
 			<span class="lat">41.9196396</span>
 			<span class="lng">-88.33525850000001</span>
 		</div>
@@ -167,10 +167,8 @@ p: (520) 840-3835
 
 <br/>
 <br style="clear:both" />
-<p><p><p>If you are not walking in divine health, you either do not know what Jesus purchased for you on the cross, or you know what is yours and have not appropiated it yet. Healing is the childrens bread but to walk in it, we must take it by force. Come and get it!</p>
+<p>If you are not walking in divine health, you either do not know what Jesus purchased for you on the cross, or you know what is yours and have not appropiated it yet. Healing is the childrens bread but to walk in it, we must take it by force. Come and get it!</p>
 <p>We will be doing a week long meeting in Monmouth Illinois from Sept. 8-15th. For detailed information please call Mark at 520-840-3835</p>
-</p>
-</p>
 
 																	</div><!-- .entry-content -->
 				</div><!-- #post-## -->
@@ -192,7 +190,7 @@ p: (520) 840-3835
 							<input type='hidden' name='comment_post_ID' value='878' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="68e20b4a9a" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="ad869e666c" /></p>					</form>
 							</div><!-- #respond -->
 			        <script type="text/javascript">
             jQuery(document).ready(function () {
@@ -381,4 +379,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-03-24 12:33:43 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-04-07 05:35:19 by W3 Total Cache -->
