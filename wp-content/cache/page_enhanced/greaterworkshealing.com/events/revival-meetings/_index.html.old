@@ -29,7 +29,7 @@
 <link rel="alternate" type="application/rss+xml" title="Greater Works &raquo; Comments Feed" href="http://greaterworkshealing.com/comments/feed/" />
 
             <script type="text/javascript">//<![CDATA[
-            // Google Analytics for WordPress by Yoast v4.3.2 | http://yoast.com/wordpress/google-analytics/
+            // Google Analytics for WordPress by Yoast v4.3.3 | http://yoast.com/wordpress/google-analytics/
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-24148147-1']);
 				            _gaq.push(['_trackPageview']);
@@ -140,13 +140,13 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="post-804" class="post-804 event type-event status-publish hentry">
 					
 					<div class="entry-content">
-						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-31aee' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
-   		<div class='em-location-map-info' id='em-location-map-info-31aee' style="display:none; visibility:hidden;">
+						<div style="float:right; margin:0px 0px 15px 25px;">   		<div class='em-location-map' id='em-location-map-a4e46' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
+   		<div class='em-location-map-info' id='em-location-map-info-a4e46' style="display:none; visibility:hidden;">
    			<div class="em-map-balloon" style="font-size:12px;">
    				<div class="em-map-balloon-content" ><strong>Laramie Christain Center</strong><br/>1953 N. 3rd St.<br /> Laramie, Wyoming<br/></div>
    			</div>
    		</div>
-		<div class='em-location-map-coords' id='em-location-map-coords-31aee' style="display:none; visibility:hidden;">
+		<div class='em-location-map-coords' id='em-location-map-coords-a4e46' style="display:none; visibility:hidden;">
 			<span class="lat">41.3292</span>
 			<span class="lng">-105.592</span>
 		</div>
@@ -166,10 +166,8 @@ p: N/A
 
 <br/>
 <br style="clear:both" />
-<p><p><p>We will be releasing the Spirit of Revival at the Laramie Christain Center beginning Saturday night, July 16th at 7:00 P:M and continuing Sunday morning, July 17th  from 10:00 A:M till noon and finishing up Sunday night from 7P:M till 10:00 with a fresh word on doing the greater works. John 14:12</p>
+<p>We will be releasing the Spirit of Revival at the Laramie Christain Center beginning Saturday night, July 16th at 7:00 P:M and continuing Sunday morning, July 17th  from 10:00 A:M till noon and finishing up Sunday night from 7P:M till 10:00 with a fresh word on doing the greater works. John 14:12</p>
 <p>Come join us for a time of releasing Revival, both personal and corporately as Mark and Cathy preach about how the Spirit of Revival has already been released to each Christain and across the globe.</p>
-</p>
-</p>
 
 																	</div><!-- .entry-content -->
 				</div><!-- #post-## -->
@@ -191,7 +189,7 @@ p: N/A
 							<input type='hidden' name='comment_post_ID' value='804' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="d340908ec5" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="6709308350" /></p>					</form>
 							</div><!-- #respond -->
 			        <script type="text/javascript">
             jQuery(document).ready(function () {
@@ -380,4 +378,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-03-24 11:50:22 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-04-12 03:39:18 by W3 Total Cache -->

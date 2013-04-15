@@ -29,7 +29,7 @@
 <link rel="alternate" type="application/rss+xml" title="Greater Works &raquo; Comments Feed" href="http://greaterworkshealing.com/comments/feed/" />
 
             <script type="text/javascript">//<![CDATA[
-            // Google Analytics for WordPress by Yoast v4.3.2 | http://yoast.com/wordpress/google-analytics/
+            // Google Analytics for WordPress by Yoast v4.3.3 | http://yoast.com/wordpress/google-analytics/
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-24148147-1']);
 				            _gaq.push(['_trackPageview']);
@@ -141,13 +141,13 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="post-832" class="post-832 location type-location status-publish hentry">
 					
 					<div class="entry-content">
-						<div style="float:right; margin:0px 0px 15px 15px;">   		<div class='em-location-map' id='em-location-map-d9d68' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
-   		<div class='em-location-map-info' id='em-location-map-info-d9d68' style="display:none; visibility:hidden;">
+						<div style="float:right; margin:0px 0px 15px 15px;">   		<div class='em-location-map' id='em-location-map-44860' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
+   		<div class='em-location-map-info' id='em-location-map-info-44860' style="display:none; visibility:hidden;">
    			<div class="em-map-balloon" style="font-size:12px;">
    				<div class="em-map-balloon-content" ><strong>Cornerstone Ministries Church</strong><br/>2 Belle Fourche River Rd.<br /> Moorcroft, Wyoming<br/></div>
    			</div>
    		</div>
-		<div class='em-location-map-coords' id='em-location-map-coords-d9d68' style="display:none; visibility:hidden;">
+		<div class='em-location-map-coords' id='em-location-map-coords-44860' style="display:none; visibility:hidden;">
 			<span class="lat">44.2633149</span>
 			<span class="lng">-104.95025379999998</span>
 		</div>
@@ -186,7 +186,7 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 							<input type='hidden' name='comment_post_ID' value='832' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="cdcd365502" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="8eb5e316d2" /></p>					</form>
 							</div><!-- #respond -->
 			        <script type="text/javascript">
             jQuery(document).ready(function () {
@@ -304,4 +304,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-04-07 07:51:04 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-04-10 06:19:30 by W3 Total Cache -->

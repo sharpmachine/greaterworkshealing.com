@@ -29,7 +29,7 @@
 <link rel="alternate" type="application/rss+xml" title="Greater Works &raquo; Comments Feed" href="http://greaterworkshealing.com/comments/feed/" />
 
             <script type="text/javascript">//<![CDATA[
-            // Google Analytics for WordPress by Yoast v4.3.2 | http://yoast.com/wordpress/google-analytics/
+            // Google Analytics for WordPress by Yoast v4.3.3 | http://yoast.com/wordpress/google-analytics/
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-24148147-1']);
 				            _gaq.push(['_trackPageview']);
@@ -166,7 +166,7 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 							<input type='hidden' name='comment_post_ID' value='738' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="d62d16a448" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="4a21aed0d8" /></p>					</form>
 							</div><!-- #respond -->
 			        <script type="text/javascript">
             jQuery(document).ready(function () {
@@ -288,4 +288,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-04-07 16:17:23 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-04-14 19:22:06 by W3 Total Cache -->

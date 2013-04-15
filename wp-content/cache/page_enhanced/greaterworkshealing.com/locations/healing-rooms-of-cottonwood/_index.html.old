@@ -29,7 +29,7 @@
 <link rel="alternate" type="application/rss+xml" title="Greater Works &raquo; Comments Feed" href="http://greaterworkshealing.com/comments/feed/" />
 
             <script type="text/javascript">//<![CDATA[
-            // Google Analytics for WordPress by Yoast v4.3.2 | http://yoast.com/wordpress/google-analytics/
+            // Google Analytics for WordPress by Yoast v4.3.3 | http://yoast.com/wordpress/google-analytics/
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-24148147-1']);
 				            _gaq.push(['_trackPageview']);
@@ -140,13 +140,13 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="post-800" class="post-800 location type-location status-publish hentry">
 					
 					<div class="entry-content">
-						<div style="float:right; margin:0px 0px 15px 15px;">   		<div class='em-location-map' id='em-location-map-4e78d' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
-   		<div class='em-location-map-info' id='em-location-map-info-4e78d' style="display:none; visibility:hidden;">
+						<div style="float:right; margin:0px 0px 15px 15px;">   		<div class='em-location-map' id='em-location-map-2c42f' style='background: #CDCDCD; width: 400px; height: 300px'>Loading Map....</div>
+   		<div class='em-location-map-info' id='em-location-map-info-2c42f' style="display:none; visibility:hidden;">
    			<div class="em-map-balloon" style="font-size:12px;">
    				<div class="em-map-balloon-content" ><strong>Healing Rooms of Cottonwood</strong><br/>868 Cove Parkway, Suite 4D<br /> Cottonwood, AZ<br/></div>
    			</div>
    		</div>
-		<div class='em-location-map-coords' id='em-location-map-coords-4e78d' style="display:none; visibility:hidden;">
+		<div class='em-location-map-coords' id='em-location-map-coords-2c42f' style="display:none; visibility:hidden;">
 			<span class="lat">34.7235</span>
 			<span class="lng">-112.002</span>
 		</div>
@@ -208,7 +208,7 @@ LISA M YAZZIE</p>
 							<input type='hidden' name='comment_post_ID' value='800' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="4fe5ea87cd" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="bb4f0d93da" /></p>					</form>
 							</div><!-- #respond -->
 			        <script type="text/javascript">
             jQuery(document).ready(function () {
@@ -326,4 +326,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-04-06 17:45:35 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-04-14 18:46:25 by W3 Total Cache -->
