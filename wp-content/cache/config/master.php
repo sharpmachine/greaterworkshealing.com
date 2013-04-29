@@ -1,7 +1,7 @@
 <?php
 
 return array(
-	'version' => '0.9.2.8',
+	'version' => '0.9.2.9',
 	'cluster.messagebus.debug' => false,
 	'cluster.messagebus.enabled' => false,
 	'cluster.messagebus.sns.region' => '',
@@ -667,5 +667,6 @@ return array(
 	'newrelic.cache_time' => 5,
 	'newrelic.enable_xmit' => false,
 	'newrelic.use_network_wide_id' => false,
+	'wordpress.home' => 'http://greaterworkshealing.com',
 	'pgcache.bad_behavior_path' => '',
 );

@@ -1,4 +1,4 @@
-	<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -6,7 +6,7 @@
 <meta name="keywords" content="mark kuntz, cathy kuntz, healing, miracles, signs, wonders, healing rooms, divine healing, prayer, gospel, deliverance, restoration, ministry, jesus, trinity, holy spirit" /> 
 <meta name="description" content="Greater Works is passionate about revival, miracles and healings.  The core of the gospel is revival and restoration of the entire man, spirit, soul and body." /> 
 <link rel="shortcut icon" type="image/x-icon" href="http://greaterworkshealing.com/wp-content/themes/greaterworks/favicon.ico">
-<title>a. a. allen | Greater Works</title>
+<title>Revival | Greater Works</title>
 <link rel="profile" href="http://gmpg.org/xfn/11" />
 <!--[if lte IE 8]>
   <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -40,7 +40,8 @@
                 s.parentNode.insertBefore(ga, s);
             })();
             //]]></script>
-				<!-- Shopp dynamic catalog styles -->
+			<link rel="alternate" type="application/rss+xml" title="Greater Works &raquo; Revival Category Feed" href="http://greaterworkshealing.com/category/revival/feed/" />
+	<!-- Shopp dynamic catalog styles -->
 	<style type="text/css">
 	#shopp ul.products li.product { width: 33%; } /* For grid view */
 	</style>
@@ -78,7 +79,7 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 <link rel='alternate' type="application/rss+xml" title="Greater Works Catalog Products RSS Feed" href="http://greaterworkshealing.com/store/category/catalog/feed/" />
 </head>
 
-<body class="archive tax-video_tags term-a-a-allen term-36">
+<body class="archive category category-revival category-27">
 	<div id="header-bar">
 		<header>
 			<div id="logo"><a href="http://greaterworkshealing.com"><img src="http://greaterworkshealing.com/wp-content/themes/greaterworks/images/logo.png" width="187" height="47" alt="Logo"></a></div>
@@ -121,36 +122,37 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 				<div id="page-title-banner">
 				<div id="heading">
 					
-					<h1>  a. a. allen</h1>
+					<h1>Category</h1>
 					
 				</div>
 			</div>
 			
 <div class="container">
 		<div id="page" class="span-8">
-
-
-
-			<h1 class="page-title">
-							</h1>
-
+				<h1 class="page-title"> <span>Revival</span></h1>
+				
 
 
 
 
-
-			<div id="post-743" class="post-743 videos type-videos status-publish hentry">
-			<h2 class="entry-title"><a href="http://greaterworkshealing.com/videos/cathy-speaks-gravesite/" title="Permalink to Cathy Speaks at the Gravesite" rel="bookmark">Cathy Speaks at the Gravesite</a></h2>
+			<div id="post-706" class="post-706 post type-post status-publish format-standard hentry category-healing category-revival tag-laramie tag-revival-2">
+			<h2 class="entry-title"><a href="http://greaterworkshealing.com/2011/07/more-fire-in-sheridan-wyoming/" title="Permalink to More Fire in Sheridan Wyoming" rel="bookmark">More Fire in Sheridan Wyoming</a></h2>
 
 			<div class="entry-meta">
-				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/videos/cathy-speaks-gravesite/" title="1:30 pm" rel="bookmark"><span class="entry-date">October 11, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/edward/" title="View all posts by Edward Taylor">Edward Taylor</a></span>			</div><!-- .entry-meta -->
+				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/2011/07/more-fire-in-sheridan-wyoming/" title="8:55 pm" rel="bookmark"><span class="entry-date">July 26, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/mark/" title="View all posts by Mark Kuntz">Mark Kuntz</a></span>			</div><!-- .entry-meta -->
 
 				<div class="entry-summary">
-				<p>Cathy Kuntz declares a word at the gravesite of A. A. Allen.</p>
+				<p>His Fire continues to fall&#8230;&#8230; <a href="http://greaterworkshealing.com/2011/07/more-fire-in-sheridan-wyoming/" >Continue reading <span class="meta-nav">&rarr;</span></a></p>
 			</div><!-- .entry-summary -->
 	
 			<div class="entry-utility">
-															
+									<span class="cat-links">
+						<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="http://greaterworkshealing.com/category/healing/" title="View all posts in Healing" rel="category tag">Healing</a>, <a href="http://greaterworkshealing.com/category/revival/" title="View all posts in Revival" rel="category tag">Revival</a>					</span>
+					<span class="meta-sep">|</span>
+																	<span class="tag-links">
+						<span class="entry-utility-prep entry-utility-prep-tag-links">Tagged</span> <a href="http://greaterworkshealing.com/tag/laramie/" rel="tag">laramie</a>, <a href="http://greaterworkshealing.com/tag/revival-2/" rel="tag">revival</a>					</span>
+					<span class="meta-sep">|</span>
+							
 							</div><!-- .entry-utility -->
 		</div><!-- #post-## -->
 <hr>
@@ -158,18 +160,24 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 	
 
 
-			<div id="post-742" class="post-742 videos type-videos status-publish hentry">
-			<h2 class="entry-title"><a href="http://greaterworkshealing.com/videos/cheryl-davies-anthony-jeffery-gravesite/" title="Permalink to Cheryl Davies and Anthony Jeffery at the Gravesite" rel="bookmark">Cheryl Davies and Anthony Jeffery at the Gravesite</a></h2>
+			<div id="post-702" class="post-702 post type-post status-publish format-standard hentry category-healing category-revival tag-laramie">
+			<h2 class="entry-title"><a href="http://greaterworkshealing.com/2011/07/miracles-break-out-in-laramie/" title="Permalink to Miracles Break Out in Laramie" rel="bookmark">Miracles Break Out in Laramie</a></h2>
 
 			<div class="entry-meta">
-				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/videos/cheryl-davies-anthony-jeffery-gravesite/" title="1:15 pm" rel="bookmark"><span class="entry-date">October 11, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/edward/" title="View all posts by Edward Taylor">Edward Taylor</a></span>			</div><!-- .entry-meta -->
+				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/2011/07/miracles-break-out-in-laramie/" title="3:07 pm" rel="bookmark"><span class="entry-date">July 18, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/mark/" title="View all posts by Mark Kuntz">Mark Kuntz</a></span>			</div><!-- .entry-meta -->
 
 				<div class="entry-summary">
-				<p>Cheryl Davies declares a word, and Mark interviews Anthony Jeffery at A. A. Allen&#8217;s gravesite.</p>
+				<p>Last night was over the top at the Laramie Christain Center. Once again Daddy showed up in a big way and proved His love. The night before Daddy said He had given Laramie to the body of Christ and asked, &hellip; <a href="http://greaterworkshealing.com/2011/07/miracles-break-out-in-laramie/" >Continue reading <span class="meta-nav">&rarr;</span></a></p>
 			</div><!-- .entry-summary -->
 	
 			<div class="entry-utility">
-															
+									<span class="cat-links">
+						<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="http://greaterworkshealing.com/category/healing/" title="View all posts in Healing" rel="category tag">Healing</a>, <a href="http://greaterworkshealing.com/category/revival/" title="View all posts in Revival" rel="category tag">Revival</a>					</span>
+					<span class="meta-sep">|</span>
+																	<span class="tag-links">
+						<span class="entry-utility-prep entry-utility-prep-tag-links">Tagged</span> <a href="http://greaterworkshealing.com/tag/laramie/" rel="tag">laramie</a>					</span>
+					<span class="meta-sep">|</span>
+							
 							</div><!-- .entry-utility -->
 		</div><!-- #post-## -->
 <hr>
@@ -177,18 +185,24 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 	
 
 
-			<div id="post-741" class="post-741 videos type-videos status-publish hentry">
-			<h2 class="entry-title"><a href="http://greaterworkshealing.com/videos/prayers-gravesite/" title="Permalink to Prayers at the Gravesite" rel="bookmark">Prayers at the Gravesite</a></h2>
+			<div id="post-691" class="post-691 post type-post status-publish format-standard hentry category-revival tag-bay-of-holy-spirit tag-laramie">
+			<h2 class="entry-title"><a href="http://greaterworkshealing.com/2011/07/revival-in-laramie-wyoming/" title="Permalink to Revival in Laramie Wyoming" rel="bookmark">Revival in Laramie Wyoming</a></h2>
 
 			<div class="entry-meta">
-				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/videos/prayers-gravesite/" title="1:00 pm" rel="bookmark"><span class="entry-date">October 11, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/edward/" title="View all posts by Edward Taylor">Edward Taylor</a></span>			</div><!-- .entry-meta -->
+				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/2011/07/revival-in-laramie-wyoming/" title="2:45 pm" rel="bookmark"><span class="entry-date">July 17, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/mark/" title="View all posts by Mark Kuntz">Mark Kuntz</a></span>			</div><!-- .entry-meta -->
 
 				<div class="entry-summary">
-				<p>Mark, Cathy, Cheryl, and Anthony lift up prayers at the gravesite of A. A. Allen.</p>
+				<p>Last night in Laramie Wyoming God showed up in a very powerful way at Laramie Christain Center. His presence was overwhelming and very heavy. He gave a word to those in attendance that He had given Laramie to them, but &hellip; <a href="http://greaterworkshealing.com/2011/07/revival-in-laramie-wyoming/" >Continue reading <span class="meta-nav">&rarr;</span></a></p>
 			</div><!-- .entry-summary -->
 	
 			<div class="entry-utility">
-															
+									<span class="cat-links">
+						<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="http://greaterworkshealing.com/category/revival/" title="View all posts in Revival" rel="category tag">Revival</a>					</span>
+					<span class="meta-sep">|</span>
+																	<span class="tag-links">
+						<span class="entry-utility-prep entry-utility-prep-tag-links">Tagged</span> <a href="http://greaterworkshealing.com/tag/bay-of-holy-spirit/" rel="tag">bay of holy spirit</a>, <a href="http://greaterworkshealing.com/tag/laramie/" rel="tag">laramie</a>					</span>
+					<span class="meta-sep">|</span>
+							
 							</div><!-- .entry-utility -->
 		</div><!-- #post-## -->
 <hr>
@@ -196,17 +210,20 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 	
 
 
-			<div id="post-740" class="post-740 videos type-videos status-publish hentry">
-			<h2 class="entry-title"><a href="http://greaterworkshealing.com/videos/mark-introduces-a-a-allens-gravesite/" title="Permalink to Mark Introduces A. A. Allen&#8217;s Gravesite" rel="bookmark">Mark Introduces A. A. Allen&#8217;s Gravesite</a></h2>
+			<div id="post-303" class="post-303 post type-post status-publish format-standard hentry category-revival">
+			<h2 class="entry-title"><a href="http://greaterworkshealing.com/2011/07/the-spirit-of-revival/" title="Permalink to The Spirit of Revival" rel="bookmark">The Spirit of Revival</a></h2>
 
 			<div class="entry-meta">
-				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/videos/mark-introduces-a-a-allens-gravesite/" title="12:45 pm" rel="bookmark"><span class="entry-date">October 11, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/edward/" title="View all posts by Edward Taylor">Edward Taylor</a></span>			</div><!-- .entry-meta -->
+				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/2011/07/the-spirit-of-revival/" title="9:33 pm" rel="bookmark"><span class="entry-date">July 14, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/mark/" title="View all posts by Mark Kuntz">Mark Kuntz</a></span>			</div><!-- .entry-meta -->
 
 				<div class="entry-summary">
-				<p>Mark introduces A. A. Allen&#8217;s gravesite and talks about the life and ministry of A. A. Allen.</p>
+				<p>The spirit of Revival has been released across the globe. On July 23rd 2010 Revival broke out in Mobile Alabama as a woman who was paralyzed for 22 years began to walk. We had the privilege of attending this revival &hellip; <a href="http://greaterworkshealing.com/2011/07/the-spirit-of-revival/" >Continue reading <span class="meta-nav">&rarr;</span></a></p>
 			</div><!-- .entry-summary -->
 	
 			<div class="entry-utility">
+									<span class="cat-links">
+						<span class="entry-utility-prep entry-utility-prep-cat-links">Posted in</span> <a href="http://greaterworkshealing.com/category/revival/" title="View all posts in Revival" rel="category tag">Revival</a>					</span>
+					<span class="meta-sep">|</span>
 															
 							</div><!-- .entry-utility -->
 		</div><!-- #post-## -->
@@ -214,65 +231,6 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 		
 	
 
-
-			<div id="post-739" class="post-739 videos type-videos status-publish hentry">
-			<h2 class="entry-title"><a href="http://greaterworkshealing.com/videos/mark-speaks-prayer-tower/" title="Permalink to Mark Speaks in the Prayer Tower" rel="bookmark">Mark Speaks in the Prayer Tower</a></h2>
-
-			<div class="entry-meta">
-				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/videos/mark-speaks-prayer-tower/" title="12:30 pm" rel="bookmark"><span class="entry-date">October 11, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/edward/" title="View all posts by Edward Taylor">Edward Taylor</a></span>			</div><!-- .entry-meta -->
-
-				<div class="entry-summary">
-				<p>Mark tours the Prayer Tower at Miracle Valley.</p>
-			</div><!-- .entry-summary -->
-	
-			<div class="entry-utility">
-															
-							</div><!-- .entry-utility -->
-		</div><!-- #post-## -->
-<hr>
-		
-	
-
-
-			<div id="post-738" class="post-738 videos type-videos status-publish hentry">
-			<h2 class="entry-title"><a href="http://greaterworkshealing.com/videos/cheryl-davies-speaking-sanctuary/" title="Permalink to Cheryl Davies Speaking in the Sanctuary" rel="bookmark">Cheryl Davies Speaking in the Sanctuary</a></h2>
-
-			<div class="entry-meta">
-				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/videos/cheryl-davies-speaking-sanctuary/" title="12:15 pm" rel="bookmark"><span class="entry-date">October 11, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/edward/" title="View all posts by Edward Taylor">Edward Taylor</a></span>			</div><!-- .entry-meta -->
-
-				<div class="entry-summary">
-				<p>Pastor Cheryl Davies declares a word in the sanctuary at Miracle Valley.</p>
-			</div><!-- .entry-summary -->
-	
-			<div class="entry-utility">
-															
-							</div><!-- .entry-utility -->
-		</div><!-- #post-## -->
-<hr>
-		
-	
-
-
-			<div id="post-737" class="post-737 videos type-videos status-publish hentry">
-			<h2 class="entry-title"><a href="http://greaterworkshealing.com/videos/miracle-valley-introduction/" title="Permalink to Miracle Valley Introduction" rel="bookmark">Miracle Valley Introduction</a></h2>
-
-			<div class="entry-meta">
-				<span class="meta-prep meta-prep-author">Posted on</span> <a href="http://greaterworkshealing.com/videos/miracle-valley-introduction/" title="12:00 pm" rel="bookmark"><span class="entry-date">October 11, 2011</span></a> <span class="meta-sep">by</span> <span class="author vcard"><a class="url fn n" href="http://greaterworkshealing.com/author/edward/" title="View all posts by Edward Taylor">Edward Taylor</a></span>			</div><!-- .entry-meta -->
-
-				<div class="entry-summary">
-				<p>Mark introduces us to the legacy of A. A. Allen and the Miracle Valley location.</p>
-			</div><!-- .entry-summary -->
-	
-			<div class="entry-utility">
-															
-							</div><!-- .entry-utility -->
-		</div><!-- #post-## -->
-<hr>
-		
-	
-
-
-		
 		</div><!-- #page -->
 
 		
@@ -328,11 +286,11 @@ var EM = {"ajaxurl":"http:\/\/greaterworkshealing.com\/wp-admin\/admin-ajax.php"
 	<div id="footer-bar">
 		<div id="footer-form">
 			<h3>Questions or comments? Drop us a line!</h3>
-			 <div class="wpcf7" id="wpcf7-f723-p743-o1"><form action="/video-tag/a-a-allen/#wpcf7-f723-p743-o1" method="post" class="wpcf7-form" novalidate="novalidate">
+			 <div class="wpcf7" id="wpcf7-f723-p706-o1"><form action="/category/revival/#wpcf7-f723-p706-o1" method="post" class="wpcf7-form" novalidate="novalidate">
 <div style="display: none;">
 <input type="hidden" name="_wpcf7" value="723" />
 <input type="hidden" name="_wpcf7_version" value="3.4" />
-<input type="hidden" name="_wpcf7_unit_tag" value="wpcf7-f723-p743-o1" />
+<input type="hidden" name="_wpcf7_unit_tag" value="wpcf7-f723-p706-o1" />
 <input type="hidden" name="_wpnonce" value="941a9e2507" />
 </div>
 <div class="span-4">
@@ -376,4 +334,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-04-21 16:30:27 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-04-27 12:55:40 by W3 Total Cache -->
