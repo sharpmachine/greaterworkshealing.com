@@ -204,7 +204,7 @@ Galatians 6:9<br />
 							<input type='hidden' name='comment_post_ID' value='903' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="367ad321da" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="7ef1509cf4" /></p>					</form>
 							</div><!-- #respond -->
 			        <script type="text/javascript">
             jQuery(document).ready(function () {
@@ -323,4 +323,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-04-28 22:24:00 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-05-05 20:28:50 by W3 Total Cache -->

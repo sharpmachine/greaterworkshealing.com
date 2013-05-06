@@ -241,7 +241,7 @@ Blessing,</p>
 							<input type='hidden' name='comment_post_ID' value='743' id='comment_post_ID' />
 <input type='hidden' name='comment_parent' id='comment_parent' value='0' />
 						</p>
-						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="2b3434a9ea" /></p>					</form>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="ceff950c70" /></p>					</form>
 							</div><!-- #respond -->
 			        <script type="text/javascript">
             jQuery(document).ready(function () {
@@ -363,4 +363,4 @@ var _wpcf7 = {"loaderUrl":"http:\/\/greaterworkshealing.com\/wp-content\/plugins
 
 Page Caching using disk: enhanced
 
- Served from: greaterworkshealing.com @ 2013-04-27 11:02:59 by W3 Total Cache -->
+ Served from: greaterworkshealing.com @ 2013-05-01 03:03:24 by W3 Total Cache -->
