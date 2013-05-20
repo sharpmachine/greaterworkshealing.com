@@ -3,7 +3,7 @@ wp-config.php
 /wp-content/themes/greaterworks/js/hashgrid.js
 /wp-content/themes/greaterworks/css/hashgrid.css
 /wp-content/themes/greaterworks/css/style.less
-/wp-content/uploads/_wpremote_backups/
+/wp-content/uploads
 /wp-content/w3tc/
 /wp-content/backup-db/
 .htaccess
