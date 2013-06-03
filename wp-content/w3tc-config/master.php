@@ -1,7 +1,7 @@
 <?php
 
 return array(
-	'version' => '0.9.2.8',
+	'version' => '0.9.2.10',
 	'cluster.messagebus.debug' => false,
 	'cluster.messagebus.enabled' => false,
 	'cluster.messagebus.sns.region' => '',
@@ -41,9 +41,9 @@ return array(
 		10 => '\\bfound_rows\\(\\)',
 		11 => '\\bw3tc_request_data\\b',
 	),
-	'objectcache.enabled' => false,
+	'objectcache.enabled' => true,
 	'objectcache.debug' => false,
-	'objectcache.engine' => 'file',
+	'objectcache.engine' => 'apc',
 	'objectcache.file.gc' => 3600,
 	'objectcache.file.locking' => false,
 	'objectcache.memcached.servers' => array(
@@ -84,7 +84,7 @@ return array(
 	'pgcache.enabled' => true,
 	'pgcache.comment_cookie_ttl' => 1800,
 	'pgcache.debug' => false,
-	'pgcache.engine' => 'file_generic',
+	'pgcache.engine' => 'apc',
 	'pgcache.file.gc' => 3600,
 	'pgcache.file.nfs' => false,
 	'pgcache.file.locking' => false,
@@ -397,6 +397,7 @@ return array(
 	'varnish.enabled' => false,
 	'varnish.debug' => false,
 	'varnish.servers' => array(
+		0 => '',
 	),
 	'browsercache.enabled' => true,
 	'browsercache.no404wp' => false,
@@ -434,7 +435,7 @@ return array(
 	'browsercache.other.etag' => false,
 	'browsercache.other.w3tc' => true,
 	'browsercache.other.replace' => false,
-	'browsercache.timestamp' => '',
+	'browsercache.timestamp' => '1369071112',
 	'mobile.enabled' => true,
 	'mobile.rgroups' => array(
 		'high' => array(
@@ -617,7 +618,6 @@ return array(
 	'widget.pagespeed.key' => '',
 	'notes.wp_content_changed_perms' => true,
 	'notes.wp_content_perms' => false,
-	'notes.php_is_old' => true,
 	'notes.theme_changed' => false,
 	'notes.wp_upgraded' => false,
 	'notes.plugins_updated' => false,
@@ -667,4 +667,5 @@ return array(
 	'newrelic.cache_time' => 5,
 	'newrelic.enable_xmit' => false,
 	'newrelic.use_network_wide_id' => false,
+	'pgcache.late_init' => false,
 );

@@ -1,7 +1,7 @@
 <?php
 
 return array(
-	'version' => '0.9.2.9',
+	'version' => '0.9.2.10',
 	'cluster.messagebus.debug' => false,
 	'cluster.messagebus.enabled' => false,
 	'cluster.messagebus.sns.region' => '',
@@ -41,9 +41,9 @@ return array(
 		10 => '\\bfound_rows\\(\\)',
 		11 => '\\bw3tc_request_data\\b',
 	),
-	'objectcache.enabled' => false,
+	'objectcache.enabled' => true,
 	'objectcache.debug' => false,
-	'objectcache.engine' => 'file',
+	'objectcache.engine' => 'apc',
 	'objectcache.file.gc' => 3600,
 	'objectcache.file.locking' => false,
 	'objectcache.memcached.servers' => array(
@@ -69,6 +69,7 @@ return array(
 		2 => 'plugins',
 	),
 	'objectcache.lifetime' => 180,
+	'objectcache.purge.all' => false,
 	'fragmentcache.enabled' => false,
 	'fragmentcache.debug' => false,
 	'fragmentcache.engine' => 'file',
@@ -84,7 +85,7 @@ return array(
 	'pgcache.enabled' => true,
 	'pgcache.comment_cookie_ttl' => 1800,
 	'pgcache.debug' => false,
-	'pgcache.engine' => 'file_generic',
+	'pgcache.engine' => 'apc',
 	'pgcache.file.gc' => 3600,
 	'pgcache.file.nfs' => false,
 	'pgcache.file.locking' => false,
@@ -94,10 +95,10 @@ return array(
 	),
 	'pgcache.memcached.persistant' => true,
 	'pgcache.check.domain' => true,
-	'pgcache.cache.query' => false,
+	'pgcache.cache.query' => true,
 	'pgcache.cache.home' => true,
 	'pgcache.cache.feed' => true,
-	'pgcache.cache.nginx_handle_xml' => true,
+	'pgcache.cache.nginx_handle_xml' => false,
 	'pgcache.cache.ssl' => false,
 	'pgcache.cache.404' => false,
 	'pgcache.cache.flush' => false,
@@ -108,6 +109,7 @@ return array(
 		3 => 'P3P',
 	),
 	'pgcache.compatibility' => false,
+	'pgcache.remove_charset' => false,
 	'pgcache.accept.uri' => array(
 		0 => 'sitemap(_index)?\\.xml(\\.gz)?',
 		1 => '[a-z0-9_\\-]+-sitemap([0-9]+)?\\.xml(\\.gz)?',
@@ -125,6 +127,8 @@ return array(
 		9 => '/shop/thanks',
 		10 => '/shop/account',
 		11 => 'receipt\\.php',
+	),
+	'pgcache.accept.qs' => array(
 	),
 	'pgcache.reject.front_page' => false,
 	'pgcache.reject.logged' => true,
@@ -144,6 +148,7 @@ return array(
 	'pgcache.reject.cookie' => array(
 		0 => 'shopp_items_in_cart',
 	),
+	'pgcache.reject.request_head' => false,
 	'pgcache.purge.front_page' => false,
 	'pgcache.purge.home' => true,
 	'pgcache.purge.post' => true,
@@ -330,9 +335,16 @@ return array(
 	'cdn.netdna.alias' => '',
 	'cdn.netdna.consumerkey' => '',
 	'cdn.netdna.consumersecret' => '',
+	'cdn.netdna.authorization_key' => '',
 	'cdn.netdna.domain' => array(
 	),
 	'cdn.netdna.ssl' => 'auto',
+	'cdn.netdna.zone_id' => 0,
+	'cdn.maxcdn.authorization_key' => '',
+	'cdn.maxcdn.domain' => array(
+	),
+	'cdn.maxcdn.ssl' => 'auto',
+	'cdn.maxcdn.zone_id' => 0,
 	'cdn.cotendo.username' => '',
 	'cdn.cotendo.password' => '',
 	'cdn.cotendo.zones' => array(
@@ -397,6 +409,7 @@ return array(
 	'varnish.enabled' => false,
 	'varnish.debug' => false,
 	'varnish.servers' => array(
+		0 => '',
 	),
 	'browsercache.enabled' => true,
 	'browsercache.no404wp' => false,
@@ -434,7 +447,7 @@ return array(
 	'browsercache.other.etag' => false,
 	'browsercache.other.w3tc' => true,
 	'browsercache.other.replace' => false,
-	'browsercache.timestamp' => '',
+	'browsercache.timestamp' => '1369071112',
 	'mobile.enabled' => true,
 	'mobile.rgroups' => array(
 		'high' => array(
@@ -617,7 +630,6 @@ return array(
 	'widget.pagespeed.key' => '',
 	'notes.wp_content_changed_perms' => true,
 	'notes.wp_content_perms' => false,
-	'notes.php_is_old' => true,
 	'notes.theme_changed' => false,
 	'notes.wp_upgraded' => false,
 	'notes.plugins_updated' => false,
@@ -635,6 +647,7 @@ return array(
 	'notes.zlib_output_compression' => true,
 	'notes.no_permalink_rules' => true,
 	'notes.browsercache_rules_no404wp' => true,
+	'notes.cloudflare_plugin' => true,
 	'timelimit.email_send' => 180,
 	'timelimit.varnish_purge' => 300,
 	'timelimit.cache_flush' => 600,
@@ -667,6 +680,8 @@ return array(
 	'newrelic.cache_time' => 5,
 	'newrelic.enable_xmit' => false,
 	'newrelic.use_network_wide_id' => false,
+	'pgcache.late_init' => false,
+	'newrelic.include_rum' => true,
 	'wordpress.home' => 'http://greaterworkshealing.com',
 	'pgcache.bad_behavior_path' => '',
 );

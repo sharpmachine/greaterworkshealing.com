@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="http://greaterworkshealing.com/wp-content/plugins/google-sitemap-generator/sitemap.xsl"?><!-- generator="wordpress/3.5.1" -->
 <!-- sitemap-generator-url="http://www.arnebrachhold.de" sitemap-generator-version="3.2.9" -->
-<!-- generated-on="May 14, 2013 9:43 am" -->
+<!-- generated-on="May 28, 2013 8:59 am" -->
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">	<url>
 		<loc>http://greaterworkshealing.com/</loc>
 		<lastmod>2013-03-09T16:58:59+00:00</lastmod>
 		<changefreq>daily</changefreq>
 		<priority>1.0</priority>
+	</url>
+	<url>
+		<loc>http://greaterworkshealing.com/photo-gallery/</loc>
+		<lastmod>2013-05-20T17:33:42+00:00</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.6</priority>
 	</url>
 	<url>
 		<loc>http://greaterworkshealing.com/2012/10/heal-terminally-ill-fulfull-destiny/</loc>
@@ -44,13 +50,13 @@
 		<priority>0.6</priority>
 	</url>
 	<url>
-		<loc>http://greaterworkshealing.com/events/event-categories/</loc>
+		<loc>http://greaterworkshealing.com/events/my-bookings/</loc>
 		<lastmod>2012-03-07T19:05:02+00:00</lastmod>
 		<changefreq>weekly</changefreq>
 		<priority>0.6</priority>
 	</url>
 	<url>
-		<loc>http://greaterworkshealing.com/events/my-bookings/</loc>
+		<loc>http://greaterworkshealing.com/events/event-categories/</loc>
 		<lastmod>2012-03-07T19:05:02+00:00</lastmod>
 		<changefreq>weekly</changefreq>
 		<priority>0.6</priority>
@@ -208,12 +214,6 @@
 	<url>
 		<loc>http://greaterworkshealing.com/submit-a-testimony/</loc>
 		<lastmod>2011-06-07T08:14:08+00:00</lastmod>
-		<changefreq>weekly</changefreq>
-		<priority>0.6</priority>
-	</url>
-	<url>
-		<loc>http://greaterworkshealing.com/photo-gallery/</loc>
-		<lastmod>2011-06-07T07:39:36+00:00</lastmod>
 		<changefreq>weekly</changefreq>
 		<priority>0.6</priority>
 	</url>
