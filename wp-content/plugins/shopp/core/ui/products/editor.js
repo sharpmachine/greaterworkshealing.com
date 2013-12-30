@@ -1,6 +1,297 @@
-/*
+/*!
  * editor.js - Product editor behaviors
- * Copyright ?? 2008-2010 by Ingenesis Limited
+ * Copyright © 2008-2010 by Ingenesis Limited
  * Licensed under the GPLv3 (or later) {@see license.txt}
  **/
-var Pricelines=new Pricelines(),productOptions=new Array(),productAddons=new Array(),optionMenus=new Array(),addonGroups=new Array(),addonOptionsGroup=new Array(),selectedMenuOption=false,detailsidx=1,variationsidx=1,addon_group_idx=1,addonsidx=1,optionsidx=1,pricingidx=1,fileUploader=false,changes=false,saving=false,flashUploader=false,template=false,fileUploads=false;jQuery(document).ready(function(){var b=jqnc(),d=b("#title"),c=b("#title-prompt-text"),a=b(".publishdate");d.bind("focus keydown",function(){c.hide()}).blur(function(){if(d.val()==""){c.show()}else{c.hide()}});if(!product){d.focus();c.show()}postboxes.add_postbox_toggles("shopp_page_shopp-products");b(".if-js-closed").removeClass("if-js-closed").addClass("closed");b(".postbox a.help").click(function(){b(this).colorbox({iframe:true,open:true,innerWidth:768,innerHeight:480,scrolling:false});return false});b("#publish-calendar").PopupCalendar({m_input:b("#publish-month"),d_input:b("#publish-date"),y_input:b("#publish-year"),autoinit:true,title:calendarTitle,startWeek:startWeekday});b("#schedule-toggle").click(function(){b("#scheduling").slideToggle("fast",function(){if(b(this).is(":visible")){a.removeAttr("disabled")}else{a.attr("disabled",true)}})});b("#scheduling").hide();a.attr("disabled",true);b("#published").change(function(){if(b(this).attr("checked")){b("#publish-status,#schedule-toggling").show()}else{b("#publish-status,#schedule-toggling,#scheduling").hide()}}).change();editslug=new SlugEditor(product,"product");if(specs){b.each(specs,function(){addDetail(this)})}b("#addDetail").click(function(){addDetail()});fileUploads=new FileUploader("flash-upload-file",b("#ajax-upload-file"));basePrice=b(prices).get(0);if(basePrice&&basePrice.context=="product"){Pricelines.add(false,basePrice,"#product-pricing")}else{Pricelines.add(false,false,"#product-pricing")}b("#variations-setting").bind("toggleui",variationsToggle).click(function(){b(this).trigger("toggleui")}).trigger("toggleui");loadVariations((!options.v&&!options.a)?options:options.v,prices);b("#addVariationMenu").click(function(){addVariationOptionsMenu()});b("#linkOptionVariations").click(linkVariationsButton).change(linkVariationsButtonLabel);b("#addons-setting").bind("toggleui",addonsToggle).click(function(){b(this).trigger("toggleui")}).trigger("toggleui");b("#newAddonGroup").click(function(){newAddonGroup()});if(options.a){loadAddons(options.a,prices)}imageUploads=new ImageUploads(b("#image-product-id").val(),"product");categories();tags();quickSelects();updateWorkflow();window.onbeforeunload=unsavedChanges;b("#product").change(function(){changes=true}).unbind("submit").submit(function(h){h.stopPropagation();var f=b("#product").attr("action").split("?"),g=f[0]+"?"+b.param(request);b("#product")[0].setAttribute("action",g);saving=true;return true});b("#prices-loading").remove()});function updateWorkflow(){var a=jqnc();a("#workflow").change(function(){setting=a(this).val();request.page=adminpage;request.id=product;if(!request.id){request.id="new"}if(setting=="new"){request.id="new";request.next=setting}if(setting=="close"){delete request.id}if(setting=="previous"){a.each(worklist,function(b,c){if(c.id!=product){return}if(worklist[b-1]){request.next=worklist[b-1].id}else{delete request.id}})}if(setting=="next"){a.each(worklist,function(b,c){if(c.id!=product){return}if(worklist[b+1]){request.next=worklist[b+1].id}else{delete request.id}})}}).change()}function categories(){var b=jqnc();b("#new-category").hide();b("#new-category-button").click(function(){b("#new-category").toggle();b("#new-category input").focus();b(this).toggle()});b("#add-new-category").click(function(){var c=b("#new-category input").val(),d=b("#new-category select").val();if(c!=""){b("#new-category").hide();b("#new-category-button").show();b(this).addClass("updating");b.getJSON(addcategory_url+"&action=shopp_add_category&name="+c+"&parent="+d,function(e){b("#add-new-category").removeClass("updating");a(e);b.get(catmenu_url+"&action=shopp_category_menu",false,function(g){var f=b("#new-category select option").eq(0).clone();b("#new-category select").empty().html(g);f.prependTo("#new-category select");b("#new-category select").attr("selectedIndex",0)},"html");b("#new-category input").val("")})}});b("#category-menu input.category-toggle").change(function(){if(!this.checked){return true}var d,c=new Array();b("#details-menu").children().children().find("input.label").each(function(f,e){c.push(b(e).val())});d=b(this).attr("id").substr(b(this).attr("id").indexOf("-")+1);b.getJSON(spectemp_url+"&action=shopp_spec_template&category="+d,function(e){if(!e){return true}for(d in e){e[d].add=true;if(c.toString().search(e[d]["name"])==-1){addDetail(e[d])}}});b.getJSON(opttemp_url+"&action=shopp_options_template&category="+d,function(f){if(!(f&&f.options)){return true}var h=b("#variations-setting"),e=!f.options.v?f.options:f.options.v,g=false;if(!h.attr("checked")){h.attr("checked",true).trigger("toggleui")}if(optionMenus.length>0){b.each(e,function(j,i){if(!(i&&i.name&&i.options)){return}if(menu=optionMenuExists(i.name)){g=false;b.each(i.options,function(k,l){if(!(l&&l.name)){return}if(!optionMenuItemExists(menu,l.name)){menu.addOption(l);g=true}});if(g){addVariationPrices()}}else{delete i.id;b.each(i.options,function(k,l){if(!(l&&l.name)){return}delete l.id});addVariationOptionsMenu(i)}})}else{loadVariations(e,f.prices)}})});function a(j){var g=jqnc(),h,f,k,m,l=false,i=false,d=g("#new-category input").val(),e=g("#new-category select").val();if(e>0){if(g("#category-element-"+e+" ul li").size()>0){l=g("#category-element-"+e+" ul")}else{h=g("#category-element-"+e);f=g("<li></li>").insertAfter(h);l=g("<ul></ul>").appendTo(f)}}else{l=g("#category-menu > ul")}i=false;l.children().each(function(){k=g(this).children("label").text();if(k&&d<k){i=this;return false}});if(!i){m=g('<li id="category-element-'+j.id+'"></li>').appendTo(l)}else{m=g('<li id="category-element-'+j.id+'"></li>').insertBefore(i)}g('<input type="checkbox" name="categories[]" value="'+j.id+'" id="category-'+j.id+'" checked="checked" />').appendTo(m);g('<label for="category-'+j.id+'"></label>').html(d).appendTo(m)}}function tags(){var a=jqnc();function b(){a("#tagchecklist").empty();var c=a("#tags").val().split(",");if(c[0].length>0){a(c).each(function(e,d){entry=a("<span></span>").html(d).appendTo("#tagchecklist");deleteButton=a("<a></a>").html("X").addClass("ntdelbutton").click(function(){c=a("#tags").val().replace(new RegExp("(^"+d+",?|,"+d+"\\b)"),"");a("#tags").val(c);b()}).prependTo(entry)})}}a("#newtags").focus(function(){if(a(this).val()==a(this).attr("title")){a(this).val("").toggleClass("form-input-tip")}});a("#newtags").blur(function(){if(a(this).val()==""){a(this).val(a(this).attr("title")).toggleClass("form-input-tip")}});a("#add-tags").click(function(){if(a("#newtags").val()==a("#newtags").attr("title")){return true}newtags=a("#newtags").val().split(",");a(newtags).each(function(e,c){var d=a("#tags").val();c=a.trim(c);if(d==""){a("#tags").val(c)}else{if(d!=c&&d.indexOf(c+",")==-1&&d.indexOf(","+c)==-1){a("#tags").val(d+","+c)}}});b();a("#newtags").val("").blur()});b()};
+
+var Pricelines = new Pricelines(),
+ 	productOptions = new Array(),
+ 	productAddons = new Array(),
+ 	optionMenus = new Array(),
+ 	addonGroups = new Array(),
+ 	addonOptionsGroup = new Array(),
+ 	selectedMenuOption = false,
+ 	detailsidx = 1,
+ 	variationsidx = 1,
+ 	addon_group_idx = 1,
+ 	addonsidx = 1,
+ 	optionsidx = 1,
+ 	pricingidx = 1,
+ 	fileUploader = false,
+ 	changes = false,
+ 	saving = false,
+ 	flashUploader = false,
+	template = false,
+ 	fileUploads = false,
+	changesMade = false,
+	isSave = false;
+
+jQuery(document).ready(function($) {
+	var title = $('#title'),
+		titlePrompt = $('#title-prompt-text'),
+		publishfields = $('.publishdate');
+
+	// Give the product name initial focus
+	title.bind('focus keydown',function () {
+		titlePrompt.hide();
+	}).blur(function () {
+		if (title.val() == '') titlePrompt.show();
+		else titlePrompt.hide();
+	});
+
+	if (!product) {
+		title.focus();
+		titlePrompt.show();
+	}
+
+	// Init postboxes for the editor
+	postboxes.add_postbox_toggles(screenid);
+	// close postboxes that should be closed
+	$('.if-js-closed').removeClass('if-js-closed').addClass('closed');
+
+	$('.postbox a.help').click(function () {
+		$(this).colorbox({iframe:true,open:true,innerWidth:768,innerHeight:480,scrolling:false});
+		return false;
+	});
+
+	// Handle publishing/scheduling
+	$('<div id="publish-calendar" class="calendar"></div>').appendTo('#wpwrap').PopupCalendar({
+		m_input:$('#publish-month'),
+		d_input:$('#publish-date'),
+		y_input:$('#publish-year'),
+		autoinit:true,
+		title:calendarTitle,
+		startWeek:startWeekday
+	});
+
+	$('#schedule-toggle').click(function () {
+		$('#scheduling').slideToggle('fast',function () {
+			if ($(this).is(':visible')) publishfields.removeAttr('disabled');
+			else publishfields.attr('disabled',true);
+		});
+	});
+	$('#scheduling').hide();
+	publishfields.attr('disabled',true);
+
+	$('#published').change(function () {
+		if ($(this).attr('checked')) $('#publish-status,#schedule-toggling').show();
+		else $('#publish-status,#schedule-toggling,#scheduling').hide();
+	}).change();
+
+	$('#process-time').change(function () {
+		var pt = $('#processing');
+		if ($(this).attr('checked')) pt.slideDown('fast');
+		else pt.hide();
+	}).change();
+
+	// Setup the slug editor
+	editslug = new SlugEditor(product,'product');
+
+	// Load up existing specs & setup the add new button
+	if (specs) $.each(specs,function () { addDetail(this); });
+	$('#addDetail').click(function() { addDetail(); });
+
+	// Initialize file uploads before the pricelines
+	fileUploads = new FileUploader('flash-upload-file',$('#ajax-upload-file'));
+
+	// Initalize the base price line
+	basePrice = $(prices).get(0);
+	if (basePrice && basePrice.context == "product") Pricelines.add(false,basePrice,'#product-pricing');
+	else Pricelines.add(false,false,'#product-pricing');
+
+	// Initialize variations
+	$('#variations-setting').bind('toggleui',variationsToggle).click(function() {
+		$(this).trigger('toggleui');
+	}).trigger('toggleui');
+	loadVariations(!options || (!options.v && !options.a)?options:options.v,prices);
+
+	$('#addVariationMenu').click(function() { addVariationOptionsMenu(); });
+	$('#linkOptionVariations').click(linkVariationsButton).change(linkVariationsButtonLabel);
+
+	// Initialize Add-ons
+	$('#addons-setting').bind('toggleui',addonsToggle).click(function () {
+		$(this).trigger('toggleui');
+	}).trigger('toggleui');
+	$('#newAddonGroup').click(function() { newAddonGroup(); });
+	if (options && options.a) loadAddons(options.a,prices);
+
+	imageUploads = new ImageUploads($('#image-product-id').val(),'product');
+
+	// Setup categories
+	categories();
+	tags();
+	quickSelects();
+
+	$('#product').change(function () { changes = true; }).unbind('submit').submit(function(e) {
+		e.stopPropagation();
+		var url = $('#product').attr('action').split('?'),
+			action = url[0]+"?"+$.param(request); 		// Add our workflow request parameters before submitting
+		$('#product')[0].setAttribute('action',action); // More compatible for **stupid** IE
+		saving = true;
+		return true;
+	});
+
+	$('#prices-loading').remove();
+
+	// Try to detect if changes are made to any fields on the page - other than the MCE editor,
+	// we'll deal with that using TinyMCE's isDirty() function
+	$("input").on("change", function() {
+		changesMade = true;
+		$(this).off("change"); // We don't need this anymore
+	});
+
+	// We don't need an AYS dialog when saving
+	$("input[name='save']").click(function() { isSave = true });
+
+	// Confirm navigation dialog (avoid people accidentally losing work upon navigation)
+	window.onbeforeunload = function() {
+		var editor = (typeof(tinymce) != 'undefined') ? tinymce.activeEditor : false;
+		if (!isSave && (changesMade || (editor && editor.isDirty() && !editor.isHidden())) )
+			return $msg.confirm;
+	}
+});
+
+function categories () {
+	var $=jqnc();
+	$('#product .category-metabox').each(function () {
+		var $this = $(this),
+			taxonomy = $(this).attr('id').split('-').slice(1).join('-'),
+			setting = taxonomy+'_tab',
+			addui = $this.find('div.new-category').hide(),
+			tabui = $this.find('ul.category-tabs'),
+			tabs = tabui.find('li a').click(function (e) {
+				e.preventDefault();
+				var $this = $(this),
+					href = $this.attr('href');
+				$this.parent().addClass('tabs').siblings('li').removeClass('tabs');
+				$(href).show().siblings('div.tabs-panel').hide();
+				if ($this.parent().hasClass('new-category')) {
+					addui.slideDown('fast',function () {
+						addui.find('input').focus();
+					});
+				} else addui.hide();
+			}),
+
+			catAddBefore = function( s ) {
+				if ( !$('#new-'+taxonomy+'-name').val() )
+					return false;
+				s.data += '&' + $( ':checked', '#'+taxonomy+'-checklist' ).serialize();
+				$( '#' + taxonomy + '-add-submit' ).prop( 'disabled', true );
+				return s;
+			},
+
+			catAddAfter = function( r, s ) {
+				var sup, drop = $('#new'+taxonomy+'_parent');
+
+				$( '#' + taxonomy + '-add-submit' ).prop( 'disabled', false );
+				if ( 'undefined' != s.parsed.responses[0] && (sup = s.parsed.responses[0].supplemental.newcat_parent) ) {
+					drop.before(sup);
+					drop.remove();
+				}
+			};
+
+			$('#' + taxonomy + '-checklist').wpList({
+				alt: '',
+				response: taxonomy + '-ajax-response',
+				addBefore: catAddBefore,
+				addAfter: catAddAfter
+			});
+
+			tabui.find('li.tabs a').click();
+
+			$('#' + taxonomy + '-checklist li.popular-category :checkbox, #' + taxonomy + '-checklist-pop :checkbox').live( 'click', function(){
+				var t = $(this), c = t.is(':checked'), id = t.val();
+				if ( id && t.parents('#taxonomy-'+taxonomy).length )
+					$('#in-' + taxonomy + '-' + id + ', #in-popular-' + taxonomy + '-' + id).attr( 'checked', c );
+			});
+
+	});
+
+	// Handles toggling a category on/off when the category is pre-existing
+	$('.category-metabox input[type=checkbox]').change(function () {
+		if (!this.checked) return true;
+		var id,details = new Array();
+
+		// Build current list of spec labels
+		$('#details-menu').children().children().find('input.label').each(function(id,item) {
+			details.push($(item).val());
+		});
+
+		id = $(this).val();
+		// Load category spec templates
+		$.getJSON(spectemp_url+'&action=shopp_spec_template&category='+id,function (speclist) {
+			if (!speclist) return true;
+			for (id in speclist) {
+				speclist[id].add = true;
+				if (details.toString().search(speclist[id]['name']) == -1) addDetail(speclist[id]);
+			}
+		});
+
+		// Load category variation option templates
+		$.getJSON(opttemp_url+'&action=shopp_options_template&category='+id,function (t) {
+			if ( ! (t && (t.options && t.prices) && ( Object.keys(t.options).length > 0 || Object.keys(t.prices).length > 0 ))) return true;
+
+			var variant_setting = $('#variations-setting'),
+				options = !t.options.v?t.options:t.options.v,
+				added = false;
+
+			if (!variant_setting.attr('checked'))
+				variant_setting.attr('checked',true).trigger('toggleui');
+
+			if (optionMenus.length > 0) {
+				$.each(options,function (tid,tm) {
+					if (!(tm && tm.name && tm.options)) return;
+					if (menu = optionMenuExists(tm.name)) {
+						added = false;
+						$.each(tm.options,function (i,o) {
+							if (!(o && o.name)) return;
+							if (!optionMenuItemExists(menu,o.name)) {
+								menu.addOption(o);
+								added = true;
+							}
+						});
+						if (added) addVariationPrices();
+					} else {
+						// Initialize as new menu items
+						delete tm.id;
+						$.each(tm.options,function (i,o) {
+							if (!(o && o.name)) return;
+							// Remove the option ID so the option will be built into the
+							// the variations permutations
+							delete o.id;
+						});
+						addVariationOptionsMenu(tm);
+					}
+
+				});
+			} else loadVariations(options,t.prices);
+
+		});
+	});
+}
+
+function tags () {
+	var $=jqnc();
+	$('#product .tags-metabox').each(function () {
+		var $this = $(this),
+			taxonomy = $(this).attr('id').split('-').slice(1).join('-'),
+			textarea = $this.find('.tags'),
+			tags = textarea.val().split(','),
+			selector = new SearchSelector({
+				source:taxonomy,
+				parent:$this,
+				url:tagsugg_url,
+				fieldname:'tax_input['+taxonomy+']',
+				label:TAG_SEARCHSELECT_LABEL,
+				classname:'tags',
+				freeform:true,
+				autosuggest:'shopp_popular_tags'
+			});
+
+		textarea.val('');
+		$.each(tags,function (id,tag) {
+			if (tag.length == 0) return;
+			selector.ui.prepend(selector.newItem('',tag));
+		});
+	});
+}

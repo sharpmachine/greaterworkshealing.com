@@ -7,102 +7,103 @@
  * @version 1.0
  * @copyright Ingenesis Limited, 8 June, 2009
  * @package shopp
- **/
+**/
 
-if (class_exists('WP_Widget')) {
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
 
-class ShoppProductWidget extends WP_Widget {
+if ( class_exists('WP_Widget') && ! class_exists('ShoppProductWidget') ) {
 
-    function ShoppProductWidget() {
-        parent::WP_Widget(false,
-			$name = __('Shopp Product','Shopp'),
-			array('description' => __('Highlight specific store products','Shopp'))
-		);
-    }
+	class ShoppProductWidget extends WP_Widget {
 
-    function widget($args, $options) {
-		global $Shopp;
-		extract($args);
+	    function __construct() {
+	        parent::__construct(false,
+				$name = __('Shopp Product','Shopp'),
+				array('description' => __('Highlight specific store products','Shopp'))
+			);
+	    }
 
-		$title = $before_title.$options['title'].$after_title;
-		unset($options['title']);
+	    function widget($args, $options) {
+			$Shopp = Shopp::object();
+			extract($args);
 
-		$content = $Shopp->Catalog->tag('sideproduct',$options);
-		echo $before_widget.$title.$content.$after_widget;
-    }
+			$title = $before_title.$options['title'].$after_title;
+			unset($options['title']);
 
-    function update($new_instance, $old_instance) {
-        return $new_instance;
-    }
+			$content = shopp('storefront','get-sideproduct',$options);
 
-    function form($options) {
-		?>
-		<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label>
-		<input type="text" name="<?php echo $this->get_field_name('title'); ?>" id="<?php echo $this->get_field_id('title'); ?>" class="widefat" value="<?php echo $options['title']; ?>"></p>
+			if (empty($content)) return false;
+			echo $before_widget.$title.$content.$after_widget;
+	    }
 
-		<p><select id="<?php echo $this->get_field_id('source'); ?>" name="<?php echo $this->get_field_name('source'); ?>" class="widefat"><option value="category"<?php echo $options['source'] == "category"?' selected="selected"':''; ?>><?php _e('From a category','Shopp'); ?></option><option value="product"<?php echo $options['source'] == "product"?' selected="selected"':''; ?>><?php _e('By product','Shopp'); ?></option></select></p>
+	    function update($new_instance, $old_instance) {
+	        return $new_instance;
+	    }
 
-		<?php
-			if (SHOPP_PRETTYURLS) $label = __('Category Slug/ID','Shopp');
-			else $label = __('Category ID','Shopp');
-		 ?>
-		<p id="<?php echo $this->get_field_id('category-fields'); ?>" class="hidden">
-			<label for="<?php echo $this->get_field_id('category'); ?>"><?php echo $label; ?></label>
-			<input type="text" name="<?php echo $this->get_field_name('category'); ?>" id="<?php echo $this->get_field_id('category'); ?>" class="widefat" value="<?php echo $options['category']; ?>">
-			<br /><br />
-			<select id="<?php echo $this->get_field_id('limit'); ?>" name="<?php echo $this->get_field_name('limit'); ?>">
-				<?php $limits = array(1,2,3,4,5,6,7,8,9,10,15,20,25);
-					echo menuoptions($limits,$options['limit']); ?>
-			</select>
-			<select id="<?php echo $this->get_field_id('order'); ?>" name="<?php echo $this->get_field_name('order'); ?>">
-				<?php
-					$sortoptions = array(
-						"bestselling" => __('Bestselling','Shopp'),
-						"highprice" => __('Highest Price','Shopp'),
-						"lowprice" => __('Lowest Price','Shopp'),
-						"newest" => __('Newest','Shopp'),
-						"oldest" => __('Oldest','Shopp'),
-						"random" => __('Random','Shopp')
-					);
-					echo menuoptions($sortoptions,$options['order'],true);
-				?>
-			</select>
-			<label for="<?php echo $this->get_field_id('order'); ?>"><?php _e('products','Shopp'); ?></label>
-		</p>
+	    function form($options) {
+			?>
+			<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label>
+			<input type="text" name="<?php echo $this->get_field_name('title'); ?>" id="<?php echo $this->get_field_id('title'); ?>" class="widefat" value="<?php echo $options['title']; ?>"></p>
 
-		<?php
-			if (SHOPP_PRETTYURLS) $label = __('Product Slug/ID(s)','Shopp');
-			else $label = __('Product ID(s)','Shopp');
-		 ?>
-		<p id="<?php echo $this->get_field_id('product-fields'); ?>" class="hidden">
-			<label for="<?php echo $this->get_field_id('product'); ?>"><?php echo $label; ?></label>
-			<input type="text" name="<?php echo $this->get_field_name('product'); ?>" id="<?php echo $this->get_field_id('product'); ?>" class="widefat" value="<?php echo $options['product']; ?>">
-			<small><?php _e('Use commas to specify multiple products','Shopp')?></small></p>
+			<p><select id="<?php echo $this->get_field_id('source'); ?>" name="<?php echo $this->get_field_name('source'); ?>" class="widefat"><option value="category"<?php echo $options['source'] == "category"?' selected="selected"':''; ?>><?php _e('From a category','Shopp'); ?></option><option value="product"<?php echo $options['source'] == "product"?' selected="selected"':''; ?>><?php _e('By product','Shopp'); ?></option></select></p>
 
-		<script type="text/javascript">
-		(function($) {
-			$(window).ready(function () {
-				var categoryui = $('#<?php echo $this->get_field_id("category-fields"); ?>');
-				var productui = $('#<?php echo $this->get_field_id("product-fields"); ?>');
-				$('#<?php echo $this->get_field_id("source"); ?>').change(function () {
-					if ($(this).val() == "category") {
-						productui.hide();
-						categoryui.show();
-					}
-					if ($(this).val() == "product") {
-						categoryui.hide();
-						productui.show();
-					}
-				}).change();
-			});
-		})(jQuery)
-		</script>
-		<?php
-    }
+			<?php
+				if ('' != get_option('permalink_structure')) $label = __('Category Slug/ID','Shopp');
+				else $label = __('Category ID','Shopp');
+			 ?>
+			<p id="<?php echo $this->get_field_id('category-fields'); ?>" class="hidden">
+				<label for="<?php echo $this->get_field_id('category'); ?>"><?php echo $label; ?></label>
+				<input type="text" name="<?php echo $this->get_field_name('category'); ?>" id="<?php echo $this->get_field_id('category'); ?>" class="widefat" value="<?php echo $options['category']; ?>">
+				<br /><br />
+				<select id="<?php echo $this->get_field_id('limit'); ?>" name="<?php echo $this->get_field_name('limit'); ?>">
+					<?php $limits = array(1,2,3,4,5,6,7,8,9,10,15,20,25);
+						echo menuoptions($limits,$options['limit']); ?>
+				</select>
+				<select id="<?php echo $this->get_field_id('order'); ?>" name="<?php echo $this->get_field_name('order'); ?>">
+					<?php
+						$sortoptions = array(
+							"bestselling" => __('Bestselling','Shopp'),
+							"highprice" => __('Highest Price','Shopp'),
+							"lowprice" => __('Lowest Price','Shopp'),
+							"newest" => __('Newest','Shopp'),
+							"oldest" => __('Oldest','Shopp'),
+							"chaos" => __('Random','Shopp')
+						);
+						echo menuoptions($sortoptions,$options['order'],true);
+					?>
+				</select>
+				<label for="<?php echo $this->get_field_id('order'); ?>"><?php _e('products','Shopp'); ?></label>
+			</p>
 
-} // class ShoppProductWidget
+			<?php
+				if ('' != get_option('permalink_structure')) $label = __('Product Slug/ID(s)','Shopp');
+				else $label = __('Product ID(s)','Shopp');
+			 ?>
+			<p id="<?php echo $this->get_field_id('product-fields'); ?>" class="hidden">
+				<label for="<?php echo $this->get_field_id('product'); ?>"><?php echo $label; ?></label>
+				<input type="text" name="<?php echo $this->get_field_name('product'); ?>" id="<?php echo $this->get_field_id('product'); ?>" class="widefat" value="<?php echo $options['product']; ?>">
+				<small><?php _e('Use commas to specify multiple products','Shopp')?></small></p>
 
-register_widget('ShoppProductWidget');
+			<script type="text/javascript">
+			(function($) {
+				$(window).ready(function () {
+					var categoryui = $('#<?php echo $this->get_field_id("category-fields"); ?>');
+					var productui = $('#<?php echo $this->get_field_id("product-fields"); ?>');
+					$('#<?php echo $this->get_field_id("source"); ?>').change(function () {
+						if ($(this).val() == "category") {
+							productui.hide();
+							categoryui.show();
+						}
+						if ($(this).val() == "product") {
+							categoryui.hide();
+							productui.show();
+						}
+					}).change();
+				});
+			})(jQuery)
+			</script>
+			<?php
+	    }
+
+	} // class ShoppProductWidget
 
 }
-?>

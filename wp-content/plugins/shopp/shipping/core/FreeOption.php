@@ -5,43 +5,52 @@
  * Provides a free shipping rate not included in shipping estimates
  *
  * @author Jonathan Davis
- * @version 1.1
  * @copyright Ingenesis Limited, January 19, 2010
  * @package shopp
- * @since 1.1 dev
- * @subpackage FreeOption
+ * @version 1.2
+ * @since 1.2
  *
- * $Id: FreeOption.php 510 2009-09-22 14:14:09Z jond $
  **/
+
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
 
 class FreeOption extends ShippingFramework implements ShippingModule {
 
-	function methods () {
-		return array(__("Free Option","Shopp"));
+	public function methods () {
+		return Shopp::__('Free Option');
 	}
 
-	function init () {}
-	function calcitem ($id,$Item) {}
+	public function init () {}
+	public function calcitem ( $id, $Item ) {}
 
-	function calculate ($options,$Order) {
-		foreach ($this->rates as $rate) {
-			$rate['amount'] = 0;
-			if (isset($rate['name']) && isset($rate['amount']))
-				$options[$rate['name']] = new ShippingOption($rate,false);
+	public function calculate ( &$options, $Order ) {
+
+		foreach ( $this->methods as $slug => $method ) {
+
+			$amount = isset($method['table']) ? $this->tablerate($method['table']) : false;
+			if ( false === $amount ) continue; // Skip methods that don't match at all
+
+			$rate = array(
+				'slug' => $slug,
+				'name' => $method['label'],
+				'amount' => $amount,
+				'delivery' => $this->delivery($method),
+				'items' => false
+			);
+			$options[ $slug ] = new ShippingOption($rate, false);
 		}
 		return $options;
 	}
 
-	function ui () {
-?>
-var FreeOption = function (methodid,table,rates) {
-	table.empty();
-	var headingsRow = $('<tr class="headings"/>').appendTo(table);
-}
-methodHandlers.register('<?php echo $this->module; ?>',FreeOption);
-		<?php
+	public function settings () {
+
+		$this->setup('table');
+
+		$this->ui->flatrates(0, array(
+			'norates' => true,
+			'table' => $this->settings['table']
+		));
+
 	}
 
-} // END class FreeOption
-
-?>
+}

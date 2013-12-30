@@ -12,172 +12,165 @@
  * @subpackage ajax
  **/
 
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
+
 /**
- * AjaxFlow
+ * ShoppAjax
  *
  * @author Jonathan Davis
  * @since 1.1
  * @package shopp
  **/
-class AjaxFlow {
+class ShoppAjax {
 
 	/**
-	 * Ajax constructor
+	 * ShoppAjax constructor
 	 *
 	 * @author Jonathan Davis
 	 *
 	 * @return void
 	 **/
-	function __construct () {
+	public function __construct () {
+
+		if ( isset($_POST['action']) && 'add-menu-item' == $_POST['action'] ) {
+			// Boot the Admin controller to handle AJAX added WP nav menu items
+			new ShoppAdmin();
+		}
 
 		// Flash uploads require unprivileged access
-		add_action('wp_ajax_nopriv_shopp_upload_image',array(&$this,'upload_image'));
-		add_action('wp_ajax_nopriv_shopp_upload_file',array(&$this,'upload_file'));
-		add_action('wp_ajax_shopp_upload_image',array(&$this,'upload_image'));
-		add_action('wp_ajax_shopp_upload_file',array(&$this,'upload_file'));
+		add_action('wp_ajax_nopriv_shopp_upload_image', array($this, 'upload_image'));
+		add_action('wp_ajax_nopriv_shopp_upload_file', array($this, 'upload_file'));
+		add_action('wp_ajax_shopp_upload_image', array($this, 'upload_image'));
+		add_action('wp_ajax_shopp_upload_file', array($this, 'upload_file'));
 
 		// Actions that can happen on front end whether or not logged in
-		add_action('wp_ajax_nopriv_shopp_ship_costs',array(&$this,'shipping_costs'));
-		add_action('wp_ajax_shopp_ship_costs',array(&$this,'shipping_costs'));
-		add_action('wp_ajax_nopriv_shopp_checkout_submit_button', array(&$this, 'checkout_button'));
-		add_action('wp_ajax_shopp_checkout_submit_button', array(&$this, 'checkout_button'));
+		add_action('wp_ajax_nopriv_shopp_ship_costs', array($this, 'shipping_costs'));
+		add_action('wp_ajax_shopp_ship_costs', array($this, 'shipping_costs'));
 
 		// Below this line must have nonce protection (all admin ajax go below)
-		if (!isset($_REQUEST['_wpnonce'])) return;
+		if ( ! isset($_REQUEST['_wpnonce']) ) return;
 
-		add_action('wp_ajax_shopp_category_menu',array(&$this,'category_menu'));
-		add_action('wp_ajax_shopp_category_products',array(&$this,'category_products'));
-		add_action('wp_ajax_shopp_order_receipt',array(&$this,'receipt'));
-		add_action('wp_ajax_shopp_category_menu',array(&$this,'category_menu'));
-		add_action('wp_ajax_shopp_category_children',array(&$this,'category_children'));
-		add_action('wp_ajax_shopp_category_order',array(&$this,'category_order'));
-		add_action('wp_ajax_shopp_category_products_order',array(&$this,'products_order'));
-		add_action('wp_ajax_shopp_country_zones',array(&$this,'country_zones'));
-		add_action('wp_ajax_shopp_spec_template',array(&$this,'load_spec_template'));
-		add_action('wp_ajax_shopp_options_template',array(&$this,'load_options_template'));
-		add_action('wp_ajax_shopp_add_category',array(&$this,'add_category'));
-		add_action('wp_ajax_shopp_edit_slug',array(&$this,'edit_slug'));
-		add_action('wp_ajax_shopp_order_note_message',array(&$this,'order_note_message'));
-		add_action('wp_ajax_shopp_activate_key',array(&$this,'activate_key'));
-		add_action('wp_ajax_shopp_deactivate_key',array(&$this,'deactivate_key'));
-		add_action('wp_ajax_shopp_rebuild_search_index',array(&$this,'rebuild_search_index'));
-		add_action('wp_ajax_shopp_rebuild_search_index_progress',array(&$this,'rebuild_search_index_progress'));
-		add_action('wp_ajax_shopp_suggestions',array(&$this,'suggestions'));
-		add_action('wp_ajax_shopp_upload_local_taxes',array(&$this,'upload_local_taxes'));
-		add_action('wp_ajax_shopp_feature_product',array(&$this,'feature_product'));
-		add_action('wp_ajax_shopp_update_inventory',array(&$this,'update_inventory'));
-		add_action('wp_ajax_shopp_import_file',array(&$this,'import_file'));
-		add_action('wp_ajax_shopp_import_file_progress',array(&$this,'import_file_progress'));
-		add_action('wp_ajax_shopp_storage_suggestions',array(&$this,'storage_suggestions'),11);
-		add_action('wp_ajax_shopp_verify_file',array(&$this,'verify_file'));
-		add_action('wp_ajax_shopp_gateway',array(&$this,'gateway_ajax'));
+		add_action('wp_ajax_shopp_category_products', array($this, 'category_products'));
+		add_action('wp_ajax_shopp_order_receipt', array($this, 'receipt'));
+		add_action('wp_ajax_shopp_category_children', array($this, 'category_children'));
+		add_action('wp_ajax_shopp_category_order', array($this, 'category_order'));
+		add_action('wp_ajax_shopp_category_products_order', array($this, 'products_order'));
+		add_action('wp_ajax_shopp_country_zones', array($this, 'country_zones'));
+		add_action('wp_ajax_shopp_spec_template', array($this, 'load_spec_template'));
+		add_action('wp_ajax_shopp_options_template', array($this, 'load_options_template'));
+		add_action('wp_ajax_shopp_add_category', array($this, 'add_category'));
+		add_action('wp_ajax_shopp_edit_slug', array($this, 'edit_slug'));
+		add_action('wp_ajax_shopp_order_note_message', array($this, 'order_note_message'));
+		add_action('wp_ajax_shopp_activate_key', array($this, 'activate_key'));
+		add_action('wp_ajax_shopp_deactivate_key', array($this, 'deactivate_key'));
+		add_action('wp_ajax_shopp_rebuild_search_index', array('ShoppAdminSystem', 'reindex'));
+		add_action('wp_ajax_shopp_upload_local_taxes', array($this, 'upload_local_taxes'));
+		add_action('wp_ajax_shopp_feature_product', array($this, 'feature_product'));
+		add_action('wp_ajax_shopp_update_inventory', array($this, 'update_inventory'));
+		add_action('wp_ajax_shopp_import_file', array($this, 'import_file'));
+		add_action('wp_ajax_shopp_storage_suggestions', array($this, 'storage_suggestions'), 11);
+		add_action('wp_ajax_shopp_select_customer', array($this, 'select_customer'));
+		add_action('wp_ajax_shopp_suggestions', array($this, 'suggestions'));
+		add_action('wp_ajax_shopp_verify_file', array($this, 'verify_file'));
+		add_action('wp_ajax_shopp_gateway', array($this, 'gateway_ajax'));
+		add_action('wp_ajax_shopp_debuglog', array($this, 'logviewer'));
+		add_action('wp_ajax_shopp_nonag', array($this, 'nonag'));
 
 	}
 
-	function receipt () {
+	public function receipt () {
 		check_admin_referer('wp_ajax_shopp_order_receipt');
-		global $Shopp;
-		if (preg_match("/\d+/",$_GET['id'])) {
-			$Shopp->Purchase = new Purchase($_GET['id']);
-			$Shopp->Purchase->load_purchased();
-		} else die('-1');
+		if ( 0 == intval($_GET['id']) ) die('-1');
+
+		ShoppPurchase( new ShoppPurchase((int)$_GET['id']));
+
 		echo "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"
 			\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">
-		<html><head><title>".get_bloginfo('name').' &mdash; '.__('Order','Shopp').' #'.$Shopp->Purchase->id."</title>";
+		<html><head><title>".get_bloginfo('name').' &mdash; '.__('Order','Shopp').' #'.shopp('purchase','get-id')."</title>";
 			echo '<style type="text/css">body { padding: 20px; font-family: Arial,Helvetica,sans-serif; }</style>';
-			echo "<link rel='stylesheet' href='".SHOPP_TEMPLATES_URI."/shopp.css' type='text/css' />";
+			echo "<link rel='stylesheet' href='".shopp_template_url('shopp.css')."' type='text/css' />";
 		echo "</head><body>";
-		echo apply_filters('shopp_admin_order_receipt',$Shopp->Purchase->receipt('receipt-admin.php'));
+		echo apply_filters('shopp_admin_order_receipt',shopp('purchase','get-receipt','template=receipt-admin.php'));
 		if (isset($_GET['print']) && $_GET['print'] == 'auto')
 			echo '<script type="text/javascript">window.onload = function () { window.print(); window.close(); }</script>';
 		echo "</body></html>";
 		exit();
 	}
 
-	function category_menu () {
+	public function category_menu () {
 		check_admin_referer('wp_ajax_shopp_category_menu');
-		require_once(SHOPP_FLOW_PATH."/Categorize.php");
+
 		$Categorize = new Categorize();
-		echo '<option value="">Select a category&hellip;</option>';
-		echo '<option value="catalog-products">All Products</option>';
+		echo '<option value="">' . Shopp::esc_attr__('Select a category&hellip;') . '</option>';
+		echo '<option value="catalog-products">' . Shopp::esc_attr__('All Products') . '</option>';
 		echo $Categorize->menu();
 		exit();
 	}
 
-	function category_products () {
+	public function category_products () {
 		check_admin_referer('wp_ajax_shopp_category_products');
-		if (!isset($_GET['category'])) return;
+		if ( ! isset($_GET['category']) ) return;
 		$category = $_GET['category'];
-		require_once(SHOPP_FLOW_PATH."/Warehouse.php");
-		$Warehouse = new Warehouse();
+
+		$Warehouse = new ShoppAdminWarehouse;
 		echo $Warehouse->category($category);
 		exit();
 	}
 
-	function country_zones () {
+	public function country_zones () {
 		check_admin_referer('wp_ajax_shopp_country_zones');
 		$zones = Lookup::country_zones();
-		if (isset($_GET['country']) && isset($zones[$_GET['country']]))
+		if ( isset($_GET['country']) && isset($zones[$_GET['country']]))
 			echo json_encode($zones[$_GET['country']]);
 		else echo json_encode(false);
 		exit();
 	}
 
-	function load_spec_template () {
+	public function load_spec_template () {
 		check_admin_referer('wp_ajax_shopp_spec_template');
-		$db = DB::get();
-		$table = DatabaseObject::tablename(Category::$table);
-		$result = $db->query("SELECT specs FROM $table WHERE id='{$_GET['category']}' AND spectemplate='on'");
-		echo json_encode(unserialize($result->specs));
+
+		$Category = new ProductCategory((int)$_GET['category']);
+		$Category->load_meta();
+
+		echo json_encode($Category->specs);
 		exit();
 	}
 
-	function load_options_template() {
+	public function load_options_template() {
 		check_admin_referer('wp_ajax_shopp_options_template');
-		$db = DB::get();
-		$table = DatabaseObject::tablename(Category::$table);
-		$result = $db->query("SELECT options,prices FROM $table WHERE id='{$_GET['category']}' AND variations='on'");
-		if (empty($result)) exit();
-		$result->options = unserialize($result->options);
-		$result->prices = unserialize($result->prices);
-		$options = isset($result->options['v'])?$result->options['v']:$result->options;
-		foreach ($options as &$menu) {
-			foreach ($menu['options'] as &$option) $option['id'] += $_GET['cat'];
-		}
-		foreach ($result->prices as &$price) {
-			$optionids = explode(",",$price['options']);
-			foreach ($optionids as &$id) $id += $_GET['cat'];
-			$price['options'] = join(",",$optionids);
-			$price['optionkey'] = "";
-		}
+
+		$Category = new ProductCategory((int)$_GET['category']);
+		$Category->load_meta();
+
+		$result = new stdClass();
+		$result->options = $Category->options;
+		$result->prices = $Category->prices;
 
 		echo json_encode($result);
 		exit();
 	}
 
-	function upload_image () {
-		require_once(SHOPP_FLOW_PATH."/Warehouse.php");
-		$Warehouse = new Warehouse();
+	public function upload_image () {
+		$Warehouse = new ShoppAdminWarehouse;
 		echo $Warehouse->images();
 		exit();
 	}
 
-	function upload_file () {
-		require_once(SHOPP_FLOW_PATH."/Warehouse.php");
-		$Warehouse = new Warehouse();
+	public function upload_file () {
+		$Warehouse = new ShoppAdminWarehouse;
 		echo $Warehouse->downloads();
 		exit();
 	}
 
-	function add_category () {
+	public function add_category () {
 		// Add a category in the product editor
 		check_admin_referer('wp_ajax_shopp_add_category');
 		if (empty($_GET['name'])) die(0);
 
-		$Catalog = new Catalog();
+		$Catalog = new ShoppCatalog();
 		$Catalog->load_categories();
 
-		$Category = new Category();
+		$Category = new ProductCategory();
 		$Category->name = $_GET['name'];
 		$Category->slug = sanitize_title_with_dashes($Category->name);
 		$Category->parent = $_GET['parent'];
@@ -207,242 +200,367 @@ class AjaxFlow {
 
 	}
 
-	function edit_slug () {
-		check_admin_referer('wp_ajax_shopp_edit_slug');
+	/**
+	 * Handles Product/Category slug editor
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.1
+	 *
+	 * @return void
+	 **/
+	public function edit_slug () {
+		check_admin_referer( 'wp_ajax_shopp_edit_slug' );
 
-		switch ($_REQUEST['type']) {
-			case "category":
-				$Category = new Category($_REQUEST['id']);
-				if (empty($_REQUEST['slug'])) $_REQUEST['slug'] = $Category->name;
-				$Category->slug = sanitize_title_with_dashes($_REQUEST['slug']);
-				$Category->update_slug();
-				if ($Category->save()) echo apply_filters('editable_slug',$Category->slug);
-				else echo '-1';
+		$defaults = array(
+			'slug' => false,
+			'type' => false,
+			'id' => false,
+			'title' => false,
+		);
+		$p = array_merge( $defaults, $_POST );
+		extract( $p );
+
+		if ( false === $slug || false === $id ) die('-1');
+
+		switch ( $type ) {
+			case 'category':
+				$Category = new ProductCategory( $_POST['id'] );
+				if ( $slug == $Category->slug ) die('-1');
+				$term = get_term( $Category->id, $Category->taxonomy );
+
+				$Category->slug = wp_unique_term_slug( sanitize_title_with_dashes( $slug ), $term );
+				$Category->save();
+
+				echo apply_filters( 'editable_slug', $Category->slug );
 				break;
-			case "product":
-				$Product = new Product($_REQUEST['id']);
-				if (empty($_REQUEST['slug'])) $_REQUEST['slug'] = $Product->name;
-				$Product->slug = sanitize_title_with_dashes($_REQUEST['slug']);
-				if ($Product->save()) echo apply_filters('editable_slug',$Product->slug);
-				else echo '-1';
+			case 'product':
+				$Product = new ShoppProduct( $_POST['id'] );
+				if ( $slug == $Product->slug ) die( '-1' ); // Same as before? Nothing to do so bail
+
+				// Regardless of the true post status, we'll pass 'publish' here to ensure we get a unique slug back
+				$Product->slug = wp_unique_post_slug( sanitize_title_with_dashes($slug), $Product->id, 'publish', ShoppProduct::posttype(), 0 );
+				$Product->save();
+
+				echo apply_filters( 'editable_slug', $Product->slug );
 				break;
 		}
+		exit;
+	}
+
+	public function shipping_costs () {
+		if ( ! isset($_GET['method']) ) die(0);
+		$Order = ShoppOrder();
+
+		$Shiprates = $Order->Shiprates;
+		$selected = $Shiprates->selected();
+
+
+		if ( $selected !== false && $_GET['method'] != $selected->slug ) {
+			$Shiprates->selected( $_GET['method'] );
+		}
+
+		echo (string)$Order->Cart->totals();
 		exit();
 	}
 
-	function shipping_costs () {
-		if (!isset($_GET['method'])) return;
-		$Order =& ShoppOrder();
-
-		if ($_GET['method'] == $Order->Shipping->method) return;
-
-		$Order->Shipping->method = $_GET['method'];
-		$Order->Cart->retotal = true;
-		$Order->Cart->totals();
-		echo json_encode($Order->Cart->Totals);
-		exit();
-	}
-
-	function order_note_message () {
+	public function order_note_message () {
 		check_admin_referer('wp_ajax_shopp_order_note_message');
 		if (!isset($_GET['id'])) die('1');
 
-		$Note = new MetaObject($_GET['id']);
+		$Note = new ShoppMetaObject(array('id' => intval($_GET['id']),'type'=>'order_note'));
 		die($Note->value->message);
 	}
 
-	function activate_key () {
+	public function activate_key () {
 		check_admin_referer('wp_ajax_shopp_activate_key');
-		global $Shopp;
-		$updatekey = $Shopp->Settings->get('updatekey');
-		$request = array(
-			"ShoppServerRequest" => "activate-key",
-			'key' => $_GET['key'],
-			'site' => get_bloginfo('siteurl')
-		);
-		$response = $Shopp->callhome($request);
-		$result = json_decode($response);
-		if ($result[0] == "1")
-			$Shopp->Settings->save('updatekey',$result);
-		echo $response;
+		echo ShoppSupport::activate($_GET['key']);
 		exit();
 	}
 
-	function deactivate_key () {
+	public function deactivate_key () {
 		check_admin_referer('wp_ajax_shopp_deactivate_key');
-		global $Shopp;
-		$updatekey = $Shopp->Settings->get('updatekey');
-		$request = array(
-			"ShoppServerRequest" => "deactivate-key",
-			'key' => $updatekey[1],
-			'site' => get_bloginfo('siteurl')
-		);
-		$response = $Shopp->callhome($request);
-		$result = json_decode($response);
-		if ($result[0] == "0" && $updatekey[2] == "dev") $Shopp->Settings->save('updatekey',array("0"));
-		else $Shopp->Settings->save('updatekey',$result);
-		echo $response;
+		$sitekey = ShoppSupport::key();
+		$key = $sitekey['k'];
+		echo ShoppSupport::deactivate($key);
 		exit();
 	}
 
-	function rebuild_search_index () {
-		check_admin_referer('wp_ajax_shopp_rebuild_search_index');
-		$db = DB::get();
-		require(SHOPP_MODEL_PATH."/Search.php");
-		new ContentParser();
+	public function suggestions () {
+		check_admin_referer('wp_ajax_shopp_suggestions');
 
-		$set = 10;
-		$product_table = DatabaseObject::tablename(Product::$table);
-		$index_table = DatabaseObject::tablename(ContentIndex::$table);
-
-		$total = $db->query("SELECT count(id) AS products,now() as start FROM $product_table");
-		if (empty($total->products)) die('-1');
-
-		$Settings = &ShoppSettings();
-		$Settings->save('searchindex_build',mktimestamp($total->start));
-
-		$indexed = 0;
-		for ($i = 0; $i*$set < $total->products; $i++) {
-			$row = $db->query("SELECT id FROM $product_table LIMIT ".($i*$set).",$set",AS_ARRAY);
-			foreach ($row as $index => $product) {
-				$Indexer = new IndexProduct($product->id);
-				$Indexer->index();
-				$indexed++;
+		if (isset($_GET['t'])) { // @legacy
+			switch($_GET['t']) {
+				case "product-name": $_GET['s'] = 'shopp_products'; break;
+				case "product-tags": $_GET['s'] = 'shopp_tag'; break;
+				case "product-category": $_GET['s'] = 'shopp_category'; break;
+				case "customer-type": $_GET['s'] = 'shopp_customer_types'; break;
 			}
 		}
-		echo "1";
-		exit();
-	}
 
-	function rebuild_search_index_progress () {
-		check_admin_referer('wp_ajax_shopp_rebuild_search_index_progress');
-		$db = DB::get();
-		require(SHOPP_MODEL_PATH."/Search.php");
-		$product_table = DatabaseObject::tablename(Product::$table);
-		$index_table = DatabaseObject::tablename(ContentIndex::$table);
+		if (isset($_GET['s'])) {
+			global $wpdb;
 
-		$Settings = &ShoppSettings();
-		$lastbuild = $Settings->get('searchindex_build');
-		if (empty($lastbuild)) $lastbuild = 0;
+			$source = strtolower($_GET['s']);
+			$q = $_GET['q'];
 
-		$status = $db->query("SELECT count(DISTINCT product.id) AS products, count(DISTINCT product) AS indexed FROM $product_table AS product LEFT JOIN $index_table AS indx ON product.id=indx.product AND $lastbuild < UNIX_TIMESTAMP(indx.modified)");
+			do_action('shopp_suggestions_from_'.$source);
 
-		if (empty($status)) die('');
-		die($status->indexed.':'.$status->products);
-	}
+			$joins = $where = array();
+			switch ($source) {
+				case 'wp_posts':
+					$id = 'ID';
+					$name = 'post_title';
+					$table = $wpdb->posts;
+					$where[] = "post_type='post'";
+					break;
+				case 'wp_pages':
+					$id = 'ID';
+					$name = 'post_title';
+					$table = $wpdb->posts;
+					$where[] = "post_type='page'";
+					break;
+				case 'wp_categories':
+					$id = 't.term_id';
+					$name = 'name';
+					$table = "$wpdb->terms AS t";
+					$joins[] = "INNER JOIN  $wpdb->term_taxonomy AS tt ON tt.term_id = t.term_id";
+					$where[] = "tt.taxonomy = 'category'";
+					break;
+				case 'wp_tags':
+					$id = 't.term_id';
+					$name = 'name';
+					$table = "$wpdb->terms AS t";
+					$joins[] = "INNER JOIN  $wpdb->term_taxonomy AS tt ON tt.term_id = t.term_id";
+					$where[] = "tt.taxonomy = 'post_tag'";
+					break;
+				case 'wp_media':
+					$id = 'ID';
+					$name = 'post_title';
+					$table = $wpdb->posts;
+					$where[] = "post_type='attachment'";
+					break;
+				case 'wp_users':
+					$id = 'ID';
+					$name = 'user_login';
+					$table = $wpdb->users;
+					break;
+				case 'shopp_memberships':
+					$id = 'id';
+					$name = 'name';
+					$table = ShoppDatabaseObject::tablename('meta');
+					$where[] = "context='membership'";
+					$where[] = "type='membership'";
+					break;
+				case 'shopp_products':
+					$id = 'ID';
+					$name = 'post_title';
+					$table = $wpdb->posts;
+					$where[] = "post_type='".ShoppProduct::$posttype."'";
+					break;
+				case 'shopp_promotions':
+					$id = 'id';
+					$name = 'name';
+					$table = ShoppDatabaseObject::tablename(ShoppPromo::$table);
+					break;
+				case 'shopp_downloads':
+					$id = 'id';
+					$name = 'name';
+					$table = ShoppDatabaseObject::tablename('meta');
+					$where[] = "context='price'";
+					$where[] = "type='download'";
+					break;
+				case 'shopp_target_markets':
+					$markets = shopp_setting('target_markets');
+					$results = array();
+					foreach ($markets as $id => $market) {
+						if (strpos(strtolower($market),strtolower($_GET['q'])) !== false) {
+							$_ = new StdClass();
+							$_->id = $id;
+							$_->name = stripslashes($market);
+							$results[] = $_;
+						}
+					}
+					echo json_encode($results);
+					exit();
+					break;
+				case 'shopp_customer_types':
+					$types = Lookup::customer_types();
+					$results = array();
+					foreach ($types as $id => $type) {
+						if (strpos(strtolower($type),strtolower($_GET['q'])) !== false) {
+							$_ = new StdClass();
+							$_->id = $id;
+							$_->name = $type;
+							$results[] = $_;
+						}
+					}
+					echo json_encode($results);
+					exit();
+					break;
+				default:
+					if ( taxonomy_exists($_GET['s']) ) {
+						$taxonomy = $_GET['s'];
+						$id = 't.term_id';
+						$name = 'name';
+						$table = "$wpdb->terms AS t";
+						$joins[] = "INNER JOIN  $wpdb->term_taxonomy AS tt ON tt.term_id = t.term_id";
+						$where[] = "tt.taxonomy = '" . $taxonomy . "'";
+						if ( 'shopp_popular_tags' == strtolower($q) ) {
+							$q = ''; $orderlimit = "ORDER BY tt.count DESC LIMIT 15";
+						}
+					}
+					break;
+			}
 
-	function suggestions () {
-		check_admin_referer('wp_ajax_shopp_suggestions');
-		$db = DB::get();
+			if ( ! empty($q) )
+				$where[] = "$name LIKE '%".sDB::escape($q)."%'";
+			$where = join(' AND ',$where);
+			$joins = join(' ',$joins);
 
-		switch($_GET['t']) {
-			case "product-name": $table = DatabaseObject::tablename(Product::$table); break;
-			case "product-tags": $table = DatabaseObject::tablename(Tag::$table); break;
-			case "product-category": $table = DatabaseObject::tablename(Category::$table); break;
-			case "customer-type":
-				$types = Lookup::customer_types();
-				$results = array();
-				foreach ($types as $type)
-					if (strpos(strtolower($type),strtolower($_GET['q'])) !== false) $results[] = $type;
-				echo join("\n",$results);
-				exit();
-				break;
+			$query = "SELECT $id AS id, $name AS name FROM $table $joins WHERE $where $orderlimit";
+			$items = sDB::query($query,'array');
+			echo json_encode($items);
+			exit();
 		}
 
-		$entries = $db->query("SELECT name FROM $table WHERE name LIKE '%{$_GET['q']}%'",AS_ARRAY);
-		$results = array();
-		foreach ($entries as $entry) $results[] = $entry->name;
-		echo join("\n",$results);
-		exit();
 	}
 
-	function upload_local_taxes () {
-		check_admin_referer('wp_ajax_shopp_upload_local_taxes');
-		if (isset($_FILES['shopp']['error'])) $error = $_FILES['shopp']['error'];
-		if ($error) die(json_encode(array("error" => $this->uploadErrors[$error])));
+	public function select_customer () {
+		// check_admin_referer('wp_ajax_shopp_select_customer');
+		$defaults = array(
+			'page' => false,
+			'paged' => 1,
+			'per_page' => 7,
+			'status' => false,
+			's' => ''
+		);
 
-		if (!is_uploaded_file($_FILES['shopp']['tmp_name']))
-			die(json_encode(array("error" => __('The file could not be saved because the upload was not found on the server.','Shopp'))));
+		$args = wp_parse_args($_REQUEST,$defaults);
+		extract($args, EXTR_SKIP);
 
-		if (!is_readable($_FILES['shopp']['tmp_name']))
-			die(json_encode(array("error" => __('The file could not be saved because the web server does not have permission to read the upload.','Shopp'))));
-
-		if ($_FILES['shopp']['size'] == 0)
-			die(json_encode(array("error" => __('The file could not be saved because the uploaded file is empty.','Shopp'))));
-
-		$data = file_get_contents($_FILES['shopp']['tmp_name']);
-
-		$formats = array(0=>false,3=>"xml",4=>"tab",5=>"csv");
-		preg_match('/((<[^>]+>.+?<\/[^>]+>)|(.+?\t.+?\n)|(.+?,.+?\n))/',$data,$_);
-		$format = $formats[count($_)];
-		if (!$format) die(json_encode(array("error" => __('The file format could not be detected.','Shopp'))));
-
-		$_ = array();
-		switch ($format) {
-			case "xml":
-				/*
-				Example XML import file:
-					<localtaxrates>
-						<taxrate name="Kent">1</taxrate>
-						<taxrate name="New Castle">0.25</taxrate>
-						<taxrate name="Sussex">1.4</taxrate>
-					</localtaxrates>
-				*/
-				require_once(SHOPP_MODEL_PATH."/XML.php");
-				$XML = new xmlQuery($data);
-				$taxrates = $XML->tag('taxrate');
-				while($rate = $taxrates->each()) {
-					$name = $rate->attr(false,'name');
-					$value = $rate->content();
-					$_[$name] = $value;
+		if ( ! empty($s) ) {
+			$s = stripslashes($s);
+			$search = sDB::escape($s);
+			$where = array();
+			if (preg_match_all('/(\w+?)\:(?="(.+?)"|(.+?)\b)/',$s,$props,PREG_SET_ORDER)) {
+				foreach ($props as $search) {
+					$keyword = !empty($search[2])?$search[2]:$search[3];
+					switch(strtolower($search[1])) {
+						case "company": $where[] = "c.company LIKE '%$keyword%'"; break;
+						case "login": $where[] = "u.user_login LIKE '%$keyword%'"; break;
+						case "address": $where[] = "(b.address LIKE '%$keyword%' OR b.xaddress='%$keyword%')"; break;
+						case "city": $where[] = "b.city LIKE '%$keyword%'"; break;
+						case "province":
+						case "state": $where[] = "b.state='$keyword'"; break;
+						case "zip":
+						case "zipcode":
+						case "postcode": $where[] = "b.postcode='$keyword'"; break;
+						case "country": $where[] = "b.country='$keyword'"; break;
+					}
 				}
-				break;
-			case "csv":
-				if (($csv = fopen($_FILES['shopp']['tmp_name'], "r")) === false) die('');
-				while (($data = fgetcsv($csv, 1000, ",")) !== false)
-					$_[$data[0]] = !empty($data[1])?$data[1]:0;
-				fclose($csv);
-				break;
-			case "tab":
-			default:
-				$lines = explode("\n",$data);
-				foreach ($lines as $line) {
-					list($key,$value) = explode("\t",$line);
-					$_[$key] = $value;
-				}
+			} elseif (strpos($s,'@') !== false) {
+				 $where[] = "c.email LIKE '%$search%'";
+			} elseif (is_numeric($s)) {
+				$where[] = "c.phone='$search'";
+			} else $where[] = "(CONCAT(c.firstname,' ',c.lastname) LIKE '%$search%' OR c.company LIKE '%$s%' OR u.user_login LIKE '%$s%')";
+
+			$pagenum = absint( $paged );
+			if ( empty($pagenum) ) $pagenum = 1;
+			$index = ($per_page * ($pagenum-1));
+
+			$customer_table = ShoppDatabaseObject::tablename(Customer::$table);
+			$billing_table = ShoppDatabaseObject::tablename(BillingAddress::$table);
+			$purchase_table = ShoppDatabaseObject::tablename(ShoppPurchase::$table);
+			global $wpdb;
+			$users_table = $wpdb->users;
+
+			$select = array(
+				'columns' => 'SQL_CALC_FOUND_ROWS c.*,city,state,country,user_login',
+				'table' => "$customer_table as c",
+				'joins' => array(
+						$billing_table => "LEFT JOIN $billing_table AS b ON b.customer=c.id AND b.type='billing'",
+						$users_table => "LEFT JOIN $users_table AS u ON u.ID=c.wpuser AND (c.wpuser IS NULL OR c.wpuser != 0)"
+					),
+				'where' => $where,
+				'groupby' => "c.id",
+				'orderby' => "c.created DESC",
+				'limit' => "$index,$per_page"
+			);
+			$query = sDB::select($select);
+
 		}
+		// if (!empty($starts) && !empty($ends)) $where[] = ' (UNIX_TIMESTAMP(c.created) >= '.$starts.' AND UNIX_TIMESTAMP(c.created) <= '.$ends.')';
 
-		echo json_encode($_);
+		$Customers = sDB::query($query,'array','index','id');
+		$url = admin_url('admin-ajax.php');
+		?>
+		<html>
+		<head>
+			<link rel="stylesheet" id="wp-admin"  href="<?php echo admin_url('css/wp-admin.css'); ?>" type="text/css" media="all" />
+			<link rel="stylesheet" id="shopp-admin"  href="<?php echo SHOPP_ADMIN_URI.'/styles/admin.css'; ?>" type="text/css" media="all" />
+		</head>
+		<body id="customer-select">
+		<?php
+		if ( ! empty($Customers) ): ?>
+		<ul>
+			<?php foreach ($Customers as $Customer): ?>
+			<li><a href="<?php echo add_query_arg(array('order-action'=>'change-customer','page'=>$_GET['page'],'id'=>(int)$_GET['id'],'customerid'=>$Customer->id),admin_url('admin.php')); ?>" target="_parent">
+			<?php
+			$wp_user = get_userdata($Customer->wpuser);
+			$userlink = add_query_arg('user_id',$Customer->wpuser,admin_url('user-edit.php'));
+ 			echo get_avatar( $Customer->wpuser, 48 );
+			?>
+			<?php echo "<strong>$Customer->firstname $Customer->lastname</strong>"; ?><?php if (!empty($Customer->company)) echo ", $Customer->company"; ?>
+			<?php if (!empty($Customer->email)) echo "<br />$Customer->email"; ?>
+			<?php if (!empty($Customer->phone)) echo "<br />$Customer->phone"; ?>
+			</a>
+			</li>
+			<?php endforeach; ?>
+		</ul>
+		<?php else: ?>
+		<?php _e('No customers found.','Shopp'); ?>
+		<?php endif; ?>
+		</body>
+		</html>
+		<?php
 		exit();
-
 	}
 
-	function feature_product () {
+	public function upload_local_taxes () {
+		check_admin_referer('shopp-settings-taxrates');
+		$rates = ShoppAdminSystem::taxrate_upload();
+		echo json_encode($rates);
+		exit();
+	}
+
+	public function feature_product () {
 		check_admin_referer('wp_ajax_shopp_feature_product');
 
 		if (empty($_GET['feature'])) die('0');
-		$Product = new Product($_GET['feature']);
-		if ($Product->featured == "on") $Product->featured = "off";
-		else $Product->featured = "on";
+		$Product = new ProductSummary((int)$_GET['feature']);
+		if (empty($Product->product)) die('0');
+		$Product->featured = ('on' == $Product->featured)?'off':'on';
 		$Product->save();
 		echo $Product->featured;
 		exit();
 	}
 
-	function update_inventory () {
+	public function update_inventory () {
+
 		check_admin_referer('wp_ajax_shopp_update_inventory');
-		$Priceline = new Price($_GET['id']);
-		if ($Priceline->inventory != "on") die('0');
-		if ((int)$_GET['stock'] < 0) die('0');
-		$Priceline->stock = $_GET['stock'];
-		$Priceline->save();
-		echo "1";
-		exit();
+
+		$restocked = shopp_product_variant_set_stock((int) $_GET['id'], (int) $_GET['stock'], 'restock');
+
+		if ( $restocked ) {
+			echo '1';
+			exit;
+		} else die('0');
+
 	}
 
-	function import_file () {
+	public function import_file () {
 		check_admin_referer('wp_ajax_shopp_import_file');
-		global $Shopp;
+		$Shopp = Shopp::object();
 		$Engine =& $Shopp->Storage->engines['download'];
 
 		$error = create_function('$s', 'die(json_encode(array("error" => $s)));');
@@ -456,10 +574,9 @@ class AjaxFlow {
 		$_->name = $filename;
 		$_->stored = false;
 
-
 		$File = new ProductDownload();
 		$stored = false;
-		$File->_engine(); // Set engine from storage settings
+		$File->engine(); // Set engine from storage settings
 		$File->uri = sanitize_path($url);
 		$File->type = "download";
 		$File->name = $filename;
@@ -495,7 +612,7 @@ class AjaxFlow {
 			}
 
 			$tmp = basename($importfile);
-			$Settings =& ShoppSettings();
+			// $Settings =& ShoppSettings();
 
 			$_->path = $importfile;
 			if (empty($headers)) {
@@ -512,53 +629,39 @@ class AjaxFlow {
 		// Mimetype must be set or we'll have problems in the UI
 		if (!$_->mime) $_->mime = "application/octet-stream";
 
-		ob_end_clean();
-		header("Connection: close");
-		header("Content-Encoding: none");
-		ob_start();
-	 	echo json_encode($_);
-		$size = ob_get_length();
-		header("Content-Length: $size");
-		ob_end_flush();
-		flush();
-		ob_end_clean();
-
-		if ($_->stored) return;
+		echo str_repeat(' ',1024); // Minimum browser data
+		echo '<script type="text/javascript">var importFile = '.json_encode($_).';</script>'."\n";
+		echo '<script type="text/javascript">var importProgress = 0;</script>'."\n";
+		if ($_->stored) exit();
+		@ob_flush();
+		@flush();
 
 		$progress = 0;
+		$bytesread = 0;
 		fseek($file, 0);
 		$packet = 1024*1024;
+		set_time_limit(0); // Prevent timeouts
 		while(!feof($file)) {
 			if (connection_status() !== 0) return false;
 			$buffer = fread($file,$packet);
 			if (!empty($buffer)) {
 				fwrite($incoming, $buffer);
-				$progress += strlen($buffer);
-				$Settings->save($tmp.'_import_progress',$progress);
+				$bytesread += strlen($buffer);
+				echo '<script type="text/javascript">importProgress = '.$bytesread/(int)$_->size.';</script>'."\n";
+				@ob_flush();
+				@flush();
 			}
 		}
+		@ob_end_flush();
 		fclose($file);
 		fclose($incoming);
-
-		sleep(5);
-		$Settings->delete($tmp.'_import_progress');
 
 		exit();
 	}
 
-	function import_file_progress () {
-		check_admin_referer('wp_ajax_shopp_import_file_progress');
-		if (empty($_REQUEST['proc'])) die('0');
+	public function storage_suggestions () { exit(); }
 
-		$Settings =& ShoppSettings();
-		$progress = $Settings->get($_REQUEST['proc'].'_import_progress');
-		if (empty($progress)) die('0');
-		die($progress);
-	}
-
-	function storage_suggestions () { exit(); }
-
-	function verify_file () {
+	public function verify_file () {
 		check_admin_referer('wp_ajax_shopp_verify_file');
 		$Settings = &ShoppSettings();
 		chdir(WP_CONTENT_DIR); // relative file system path context for realpath
@@ -586,7 +689,7 @@ class AjaxFlow {
 
 	}
 
-	function category_children () {
+	public function category_children () {
 		check_admin_referer('wp_ajax_shopp_category_children');
 
 		if (empty($_GET['parent'])) die('0');
@@ -597,7 +700,7 @@ class AjaxFlow {
 		$filters['columns'] = 'cat.'.join(',cat.',$columns);
 		$filters['parent'] = $parent;
 
-		$Catalog = new Catalog();
+		$Catalog = new ShoppCatalog();
 		$Catalog->outofstock = true;
 		$Catalog->load_categories($filters);
 
@@ -611,69 +714,71 @@ class AjaxFlow {
 		die(json_encode($Catalog->categories));
 	}
 
-	function category_order () {
+	public function category_order () {
 		check_admin_referer('wp_ajax_shopp_category_order');
 		if (empty($_POST['position']) || !is_array($_POST['position'])) die('0');
 
-		$db =& DB::get();
-		$table = DatabaseObject::tablename(Category::$table);
+		$table = ShoppDatabaseObject::tablename(ProductCategory::$table);
 		$updates = $_POST['position'];
 		foreach ($updates as $id => $position)
-			$db->query("UPDATE $table SET priority='$position' WHERE id='$id'");
+			sDB::query("UPDATE $table SET priority='$position' WHERE id='$id'");
 		die('1');
-		exit();
 	}
 
-	function products_order () {
+	public function products_order () {
 		check_admin_referer('wp_ajax_shopp_category_products_order');
 		if (empty($_POST['category']) || empty($_POST['position']) || !is_array($_POST['position'])) die('0');
 
-		$db =& DB::get();
-		$table = DatabaseObject::tablename(Catalog::$table);
+		global $wpdb;
 		$updates = $_POST['position'];
-		foreach ($updates as $id => $position)
-			$db->query("UPDATE $table SET priority='$position' WHERE id='$id'");
+		$category = (int)$_POST['category'];
+		foreach ((array)$updates as $id => $position)
+			sDB::query("UPDATE $wpdb->term_relationships SET term_order='".((int)$position)."' WHERE object_id='".((int)$id)."' AND term_taxonomy_id='$category'");
 		die('1');
-		exit();
 	}
 
-	/**
-	 * @deprecated Discontinuing Use
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @return void Description...
-	 **/
-	function checkout_button () {
-		global $Shopp;
-		if (isset($_POST['paymethod']) && isset($Shopp->Order->payoptions[ $_POST['paymethod'] ])) {
-			$Shopp->Order->paymethod = $paymethod = $_POST['paymethod'];
-			$Shopp->Order->_paymethod_selected = true;
-			// User selected one of the payment options
-			$processor = $Shopp->Order->payoptions[$this->paymethod]->processor;
-			if (isset($Shopp->Gateways->active[$processor])) {
-				remove_all_filters('shopp_init_checkout');
-				remove_all_filters('shopp_checkout_submit_button');
-				remove_all_filters('shopp_process_checkout');
-				$Gateway = $Shopp->Order->processor($processor);
-				$Gateway->actions();
-				do_action('shopp_init_checkout');
-			}
-		}
-		echo $Shopp->Order->tag('submit');
-		exit();
-	}
-
-	function gateway_ajax () {
+	public function gateway_ajax () {
 		check_admin_referer('wp_ajax_shopp_gateway');
 		if (isset($_POST['pid'])) {
-			$purchase = new Purchase($_POST['pid']);
-			if($purchase->gateway) do_action('shopp_gateway_ajax_'.sanitize_title_with_dashes($purchase->gateway), $_POST);
+			$Purchase = new ShoppPurchase($_POST['pid']);
+			if ($Purchase->gateway) do_action('shopp_gateway_ajax_'.sanitize_title_with_dashes($Purchase->gateway), $Purchase);
 		}
 		exit();
 	}
 
-} // END class AjaxFlow
+	// @todo Investigate if it is possible to inject a formatted error log message as an XSS vector
+	public function logviewer () {
+		check_admin_referer('wp_ajax_shopp_debuglog'); ?>
+		<html>
+		<head>
+		<?php if ( ! isset( $_REQUEST['refresh'] ) && 'off' === $_REQUEST['refresh'] ): ?>
+		<meta http-equiv="refresh" content="10">
+		<?php endif; ?>
+		<style type="text/css">
+		body { margin: 0; padding: 0; font-family:monospace;font-size:1em;line-height:1em;}
+		ol { list-style:decimal;padding-left:5em;background:#ececec;margin-left:0; margin-bottom: 1px; }
+		ol li { background:white;margin:0;padding:5px; }
+		a { color: #606060; text-decoration: none; }
+		</style>
+		</head>
+		<body>
+		<ol><?php $log = ShoppErrorLogging()->tail(1000); $size = count($log);
+				foreach ($log as $n => $line) {
+					if (empty($line)) continue;
+					echo '<li'.($n+1 == $size?' id="bottom"':'').'>'.$line.'</li>';
+				}
 
-?>
+		?></ol>
+		<script type="text/javascript">
+		document.getElementById('bottom').scrollIntoView();
+		</script></body></html><?php exit();
+	}
+
+	public function nonag () {
+		check_admin_referer('wp_ajax_shopp_nonag');
+		$id = get_current_user_id();
+        add_user_meta($id, 'shopp_nonag', 'true', true);
+		return true;
+	}
+
+}

@@ -1,17 +1,22 @@
 <?php
 /**
- * Categorize
+ * Categorize.php
  *
  * Flow controller for category management interfaces
  *
  * @author Jonathan Davis
- * @version 1.0
- * @copyright Ingenesis Limited, January 6, 2010
+ * @copyright Ingenesis Limited, September 15, 2011
  * @package shopp
+ * @version 1.2
  * @subpackage categories
  **/
 
-class Categorize extends AdminController {
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
+
+class ShoppAdminCategorize extends ShoppAdminController {
+
+	public $worklist = array();
+	protected $ui = 'categories';
 
 	/**
 	 * Categorize constructor
@@ -19,8 +24,15 @@ class Categorize extends AdminController {
 	 * @return void
 	 * @author Jonathan Davis
 	 **/
-	function __construct () {
+	public function __construct () {
 		parent::__construct();
+
+		Shopping::restore('worklist', $this->worklist);
+
+		if ('shopp-tags' == $_GET['page']) {
+			wp_redirect(add_query_arg(array('taxonomy'=>ProductTag::$taxon), admin_url('edit-tags.php')));
+			return;
+		}
 
 		if (!empty($_GET['id']) && !isset($_GET['a'])) {
 
@@ -40,18 +52,19 @@ class Categorize extends AdminController {
 			shopp_enqueue_script('shopp-swfupload-queue');
 
 			do_action('shopp_category_editor_scripts');
-			add_action('admin_head',array(&$this,'layout'));
+			add_action('admin_head',array($this,'layout'));
 		} elseif (!empty($_GET['a']) && $_GET['a'] == 'arrange') {
 			shopp_enqueue_script('category-arrange');
 			do_action('shopp_category_arrange_scripts');
-			add_action('admin_print_scripts',array(&$this,'arrange_cols'));
+			add_action('admin_print_scripts',array($this,'arrange_cols'));
 		} elseif (!empty($_GET['a']) && $_GET['a'] == 'products') {
 			shopp_enqueue_script('products-arrange');
 			do_action('shopp_category_products_arrange_scripts');
-			add_action('admin_print_scripts',array(&$this,'products_cols'));
-		} else add_action('admin_print_scripts',array(&$this,'columns'));
+			add_action('admin_print_scripts',array($this,'products_cols'));
+		} else add_action('admin_print_scripts',array($this,'columns'));
 		do_action('shopp_category_admin_scripts');
-		add_action('load-shopp_page_shopp-categories',array(&$this,'workflow'));
+
+		add_action('load-' . $this->screen, array($this, 'workflow'));
 	}
 
 	/**
@@ -61,10 +74,18 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function admin () {
+	public function admin () {
+		if ('shopp-tags' == $_GET['page']) return;
+
 		if (!empty($_GET['id']) && !isset($_GET['a'])) $this->editor();
 		elseif (!empty($_GET['id']) && isset($_GET['a']) && $_GET['a'] == "products") $this->products();
-		else $this->categories();
+		else {
+			$this->categories();
+
+			// Save workflow list
+			$this->worklist = $this->categories(true);
+			$this->worklist['query'] = $_GET;
+		}
 	}
 
 	/**
@@ -74,61 +95,90 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function workflow () {
-		global $Shopp;
-		$db =& DB::get();
+	public function workflow () {
+
 		$defaults = array(
+			'action' => false,
+			'selected' => array(),
 			'page' => false,
-			'deleting' => false,
-			'delete' => false,
 			'id' => false,
 			'save' => false,
-			'duplicate' => false,
-			'next' => false
-			);
-		$args = array_merge($defaults,$_REQUEST);
-		extract($args,EXTR_SKIP);
+			'next' => false,
+			'_wpnonce' => false
+		);
+		$args = array_merge($defaults, $_REQUEST);
+		extract($args, EXTR_SKIP);
 
-		if (!defined('WP_ADMIN') || !isset($page)
-			|| $page != $this->Admin->pagename('categories'))
-				return false;
+		if ( ! defined('WP_ADMIN') || $page != $this->page() )
+			return false;
 
 		$adminurl = admin_url('admin.php');
 
-		if ($page == $this->Admin->pagename('categories')
-				&& !empty($deleting)
-				&& !empty($delete)
-				&& is_array($delete)) {
-			foreach($delete as $deletion) {
-				$Category = new Category($deletion);
-				if (empty($Category->id)) continue;
-				$db->query("UPDATE $Category->_table SET parent=0 WHERE parent=$Category->id");
-				$Category->delete();
+		add_screen_option( 'per_page', array( 'label' => __('Categories Per Page','Shopp'), 'default' => 20, 'option' => 'edit_' . ProductCategory::$taxon . '_per_page' ) );
+
+		if ( 'delete' == $action && wp_verify_nonce($_wpnonce, 'shopp_categories_manager') ) {
+			if ( ! empty($id) ) $selected = array($id);
+			$total = count($selected);
+			foreach ( $selected as $selection ) {
+				$DeletedCategory = new ProductCategory($selection);
+				$deleted = $DeletedCategory->name;
+				$DeletedCategory->delete();
 			}
-			$redirect = (add_query_arg(array_merge($_GET,array('delete'=>null,'deleting'=>null)),$adminurl));
-			shopp_redirect($redirect);
+			if ( 1 == $total ) $this->notice(Shopp::__('Deleted %s category.', "<strong>$deleted</strong>"));
+			else $this->notice(Shopp::__('Deleted %s categories.', "<strong>$total</strong>"));
+
+			$reset = array('selected' => null, 'action' => null, 'id' => null, '_wpnonce' => null, );
+			$redirect = add_query_arg(array_merge($_GET, $reset), $adminurl);
+			Shopp::redirect( $redirect );
+			exit;
 		}
 
-		if ($id && $id != "new")
-			$Shopp->Category = new Category($id);
-		else $Shopp->Category = new Category();
+		if ( $id && 'new' != $id )
+			$Category = new ProductCategory($id);
+		else $Category = new ProductCategory();
 
-		if ($save) {
-			$this->save($Shopp->Category);
-			$this->Notice = '<strong>'.stripslashes($Shopp->Category->name).'</strong> '.__('has been saved.','Shopp');
+		$meta = array('specs', 'priceranges', 'options', 'prices');
+		foreach ( $meta as $prop )
+			if ( ! isset($Category->$prop) ) $Category->$prop = array();
 
-			if ($next) {
-				if ($next != "new")
-					$Shopp->Category = new Category($next);
-				else $Shopp->Category = new Category();
+		if ( $save ) {
+			$this->save($Category);
+
+			// Workflow handler
+			if ( isset($_REQUEST['settings']) && isset($_REQUEST['settings']['workflow']) ) {
+				$workflow = $_REQUEST['settings']['workflow'];
+				$working = array_search($id, $this->worklist);
+
+				switch( $workflow ) {
+					case 'close': $next = 'close'; break;
+					case 'new': $next = 'new'; break;
+					case 'next': $key = $working + 1; break;
+					case 'previous': $key = $working - 1; break;
+				}
+
+				if ( isset($key) ) $next = isset($this->worklist[ $key ]) ? $this->worklist[ $key ] : 'close';
+
+			}
+
+			if ( $next ) {
+				if ( 'new' == $next ) $Category = new ProductCategory();
+				else $Category = new ProductCategory($next);
 			} else {
-				if (empty($id)) $id = $Shopp->Category->id;
-				$Shopp->Category = new Category($id);
+				if ( empty($id) ) $id = $Category->id;
+				$Category = new ProductCategory($id);
 			}
-
 		}
+
+		ShoppCollection($Category);
+
 	}
 
+	public function load_category ( $term, $taxonomy ) {
+		$Category = new ProductCategory();
+		$Category->populate($term);
+
+		return $Category;
+	}
 	/**
 	 * Interface processor for the category list manager
 	 *
@@ -136,63 +186,63 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function categories ($workflow=false) {
-		global $Shopp;
-		$db = DB::get();
+	public function categories ( $workflow = false ) {
 
-		if ( !(is_shopp_userlevel() || current_user_can('shopp_categories')) )
+		if ( ! current_user_can('shopp_categories') )
 			wp_die(__('You do not have sufficient permissions to access this page.'));
 
+		$per_page_option = get_current_screen()->get_option( 'per_page' );
+
 		$defaults = array(
-			'pagenum' => 1,
+			'paged' => 1,
 			'per_page' => 20,
 			's' => '',
 			'a' => ''
 			);
-		$args = array_merge($defaults,$_GET);
-		extract($args,EXTR_SKIP);
+		$args = array_merge($defaults, $_GET);
+		if ( false !== ( $user_per_page = get_user_option($per_page_option['option']) ) ) $args['per_page'] = $user_per_page;
+		extract($args, EXTR_SKIP);
 
 		if ('arrange' == $a)  {
 			$this->init_positions();
 			$per_page = 300;
 		}
 
-		$pagenum = absint( $pagenum );
-		if ( empty($pagenum) )
-			$pagenum = 1;
-		if( !$per_page || $per_page < 0 )
-			$per_page = 20;
-		$start = ($per_page * ($pagenum-1));
+		$paged = absint( $paged );
+		$start = ($per_page * ($paged-1));
+		$end = $start + $per_page;
 
-		$filters = array();
+		$url = add_query_arg(array_merge($_GET,array('page'=>$this->Admin->pagename('categories'))),admin_url('admin.php'));
+
+		$taxonomy = 'shopp_category';
+
+		$filters = array('hide_empty' => 0,'fields'=>'id=>parent');
+		add_filter('get_shopp_category',array($this,'load_category'),10,2);
+
 		// $filters['limit'] = "$start,$per_page";
-		if (!empty($s)) $filters['where'] = "cat.name LIKE '%$s%'";
+		if (!empty($s)) $filters['search'] = $s;
 
-		$table = DatabaseObject::tablename(Category::$table);
-		$Catalog = new Catalog();
-		$Catalog->outofstock = true;
-		if ($workflow) {
-			$filters['columns'] = "cat.id,cat.parent,cat.priority";
-			$results = $Catalog->load_categories($filters,false,true);
-			return array_slice($results,$start,$per_page);
+		$Categories = array(); $count = 0;
+		$terms = get_terms( $taxonomy, $filters );
+		if (empty($s)) {
+			$children = _get_term_hierarchy($taxonomy);
+			ProductCategory::tree($taxonomy,$terms,$children,$count,$Categories,$paged,$per_page);
+			$this->categories = $Categories;
 		} else {
-			if ('arrange' == $a) {
-				$filters['columns'] = "cat.id,cat.parent,cat.priority,cat.name,cat.uri,cat.slug";
-				$filters['parent'] = '0';
-			} else $filters['columns'] = "cat.id,cat.parent,cat.priority,cat.name,cat.description,cat.uri,cat.slug,cat.spectemplate,cat.facetedmenus,count(DISTINCT pd.id) AS total";
-
-			$Catalog->load_categories($filters);
-			$Categories = array_slice($Catalog->categories,$start,$per_page);
+			foreach ($terms as $id => $parent)
+				$Categories[$id] = get_term($id,$taxonomy);
 		}
 
-		$count = $db->query("SELECT count(*) AS total FROM $table");
-		$num_pages = ceil($count->total / $per_page);
-		$page_links = paginate_links( array(
-			'base' => add_query_arg( array('edit'=>null,'pagenum' => '%#%' )),
-			'format' => '',
-			'total' => $num_pages,
-			'current' => $pagenum
-		));
+		$ids = array_keys($Categories);
+		if ($workflow) return $ids;
+
+		$meta = ShoppDatabaseObject::tablename(ShoppMetaObject::$table);
+		if ( ! empty($ids) ) sDB::query("SELECT * FROM $meta WHERE parent IN (".join(',',$ids).") AND context='category' AND type='meta'",'array',array($this,'metaloader'));
+
+		$count = wp_count_terms('shopp_category');
+		$num_pages = ceil($count / $per_page);
+
+		$ListTable = ShoppUI::table_set_pagination ($this->screen, $count, $num_pages, $per_page );
 
 		$action = esc_url(
 			add_query_arg(
@@ -201,13 +251,29 @@ class Categorize extends AdminController {
 			)
 		);
 
-		if ('arrange' == $a) {
-			include(SHOPP_ADMIN_PATH."/categories/arrange.php");
-			return;
-		}
+		// @todo Rework category arrange ui and updating to use WP taxonomies
+		// if ('arrange' == $a) {
+		// 	include(SHOPP_ADMIN_PATH."/categories/arrange.php");
+		// 	return;
+		// }
 
+		include $this->ui('categories.php');
+	}
 
-		include(SHOPP_ADMIN_PATH."/categories/categories.php");
+	public function metaloader (&$records,&$record) {
+		if (empty($this->categories)) return;
+		if (empty($record->name)) return;
+
+		if (is_array($this->categories) && isset($this->categories[ $record->parent ])) {
+			$target = $this->categories[ $record->parent ];
+		} else return;
+
+		$Meta = new ShoppMetaObject();
+		$Meta->populate($record);
+		$target->meta[$record->name] = $Meta;
+		if (!isset($this->{$record->name}))
+			$target->{$record->name} = &$Meta->value;
+
 	}
 
 	/**
@@ -217,14 +283,16 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function columns () {
-		register_column_headers('shopp_page_shopp-categories', array(
-			'cb'=>'<input type="checkbox" />',
-			'name'=>__('Name','Shopp'),
-			'links'=>__('Products','Shopp'),
-			'templates'=>__('Templates','Shopp'),
-			'menus'=>__('Menus','Shopp'))
+	public function columns () {
+		$columns = array(
+			'cb' => '<input type="checkbox" />',
+			'name' => Shopp::__('Name'),
+			'slug' => Shopp::__('Slug'),
+			'products' => Shopp::__('Products'),
+			'templates' => Shopp::__('Templates'),
+			'menus' => Shopp::__('Menus')
 		);
+		ShoppUI::register_column_headers($this->screen, apply_filters('shopp_manage_category_columns',$columns));
 	}
 
 	/**
@@ -234,10 +302,10 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function layout () {
-		global $Shopp;
+	public function layout () {
+		$Shopp = Shopp::object();
 		$Admin =& $Shopp->Flow->Admin;
-		include(SHOPP_ADMIN_PATH."/categories/ui.php");
+		include $this->ui('ui.php');
 	}
 
 	/**
@@ -247,10 +315,10 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function arrange_cols () {
+	public function arrange_cols () {
 		register_column_headers('shopp_page_shopp-categories', array(
-			'cat'=>__('Category','Shopp'),
-			'move'=>'<div class="move">&nbsp;</div>')
+			'cat' => Shopp::__('Category'),
+			'move' => '<div class="move">&nbsp;</div>')
 		);
 	}
 
@@ -261,32 +329,26 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function editor () {
-		global $Shopp,$CategoryImages;
-		$db = DB::get();
+	public function editor () {
+		global $CategoryImages;
+		$Shopp = Shopp::object();
 
-		if ( !(is_shopp_userlevel() || current_user_can('shopp_categories')) )
+		if ( ! current_user_can('shopp_categories') )
 			wp_die(__('You do not have sufficient permissions to access this page.'));
 
-		if (empty($Shopp->Category)) $Category = new Category();
-		else $Category = $Shopp->Category;
+		$Category = ShoppCollection();
+		if ( empty($Category) ) $Category = new ProductCategory();
 
+		$Category->load_meta();
 		$Category->load_images();
 
-		$Price = new Price();
-		$priceTypes = array(
-			array('value'=>'Shipped','label'=>__('Shipped','Shopp')),
-			array('value'=>'Virtual','label'=>__('Virtual','Shopp')),
-			array('value'=>'Download','label'=>__('Download','Shopp')),
-			array('value'=>'Donation','label'=>__('Donation','Shopp')),
-			array('value'=>'N/A','label'=>__('N/A','Shopp'))
-		);
+		$Price = new ShoppPrice();
+		$priceTypes = ShoppPrice::types();
+		$billPeriods = ShoppPrice::periods();
 
 		// Build permalink for slug editor
-		$permalink = trailingslashit(shoppurl())."category/";
+		$permalink = trailingslashit(Shopp::url())."category/";
 		$Category->slug = apply_filters('editable_slug',$Category->slug);
-		if (!empty($Category->slug))
-			$permalink .= substr($Category->uri,0,strpos($Category->uri,$Category->slug));
 
 		$pricerange_menu = array(
 			"disabled" => __('Price ranges disabled','Shopp'),
@@ -294,11 +356,7 @@ class Categorize extends AdminController {
 			"custom" => __('Use custom price ranges','Shopp'),
 		);
 
-
-		$categories_menu = $this->menu($Category->parent,$Category->id);
-		$categories_menu = '<option value="0">'.__('Parent Category','Shopp').'&hellip;</option>'.$categories_menu;
-
-		$uploader = $Shopp->Settings->get('uploader_pref');
+		$uploader = shopp_setting('uploader_pref');
 		if (!$uploader) $uploader = 'flash';
 
 		$workflows = array(
@@ -309,7 +367,14 @@ class Categorize extends AdminController {
 			"previous" => __('Edit Previous','Shopp')
 			);
 
-		include(SHOPP_ADMIN_PATH."/categories/category.php");
+		do_action('add_meta_boxes', ProductCategory::$taxon, $Category);
+		do_action('add_meta_boxes_'.ProductCategory::$taxon, $Category);
+
+		do_action('do_meta_boxes', ProductCategory::$taxon, 'normal', $Category);
+		do_action('do_meta_boxes', ProductCategory::$taxon, 'advanced', $Category);
+		do_action('do_meta_boxes', ProductCategory::$taxon, 'side', $Category);
+
+		include $this->ui('category.php');
 	}
 
 	/**
@@ -319,58 +384,83 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function save ($Category) {
-		global $Shopp;
-		$Settings = &ShoppSettings();
-		$db = DB::get();
+	public function save ( $Category ) {
+		$Shopp = Shopp::object();
+
 		check_admin_referer('shopp-save-category');
 
-		if ( !(is_shopp_userlevel() || current_user_can('shopp_categories')) )
+		if ( ! current_user_can('shopp_categories') )
 			wp_die(__('You do not have sufficient permissions to access this page.'));
 
-		$Settings->saveform(); // Save workflow setting
+		shopp_set_formsettings(); // Save workflow setting
 
-		$Shopp->Catalog = new Catalog();
-		$Shopp->Catalog->load_categories(array(
-			'columns' => "cat.id,cat.parent,cat.name,cat.description,cat.uri,cat.slug",
-			'where' => array(),
-			'joins' => array(),
-			'orderby' => false,
-			'order' => false,
-			'outofstock' => true
-		));
+		if (empty($Category->meta))
+			$Category->load_meta();
 
-		$Category->update_slug();
+		if (isset($_POST['content'])) $_POST['description'] = $_POST['content'];
 
-		if (!empty($_POST['deleteImages'])) {
-			$deletes = array();
-			if (strpos($_POST['deleteImages'],","))	$deletes = explode(',',$_POST['deleteImages']);
-			else $deletes = array($_POST['deleteImages']);
-			$Category->delete_images($deletes);
-		}
+		$Category->name = $_POST['name'];
+		$Category->description = $_POST['description'];
+		$Category->parent = $_POST['parent'];
+		$Category->prices = array();
 
 		// Variation price templates
 		if (!empty($_POST['price']) && is_array($_POST['price'])) {
 			foreach ($_POST['price'] as &$pricing) {
-				$pricing['price'] = floatvalue($pricing['price'],false);
-				$pricing['saleprice'] = floatvalue($pricing['saleprice'],false);
-				$pricing['shipfee'] = floatvalue($pricing['shipfee'],false);
+				$pricing['price'] = Shopp::floatval($pricing['price'],false);
+				$pricing['saleprice'] = Shopp::floatval($pricing['saleprice'],false);
+				$pricing['shipfee'] = Shopp::floatval($pricing['shipfee'],false);
+				$pricing['dimensions'] = array_map(array('Shopp', 'floatval'), $pricing['dimensions']);
 			}
-			$Category->prices = stripslashes_deep($_POST['price']);
-		} else $Category->prices = array();
+		}
+
+		$_POST['prices'] = isset($_POST['price'])?$_POST['price']:array();
 
 		if (empty($_POST['specs'])) $Category->specs = array();
-		else $_POST['specs'] = stripslashes_deep($_POST['specs']);
 
-		if (empty($_POST['options'])
-			|| (count($_POST['options']['v'])) == 1 && !isset($_POST['options']['v'][1]['options'])) {
+		/* @todo Move the rest of category meta inputs to [meta] inputs eventually */
+		if (isset($_POST['meta']) && isset($_POST['meta']['options'])) {
+			// Moves the meta options input to 'options' index for compatibility
+			$_POST['options'] = $_POST['meta']['options'];
+		}
+
+		if (empty($_POST['meta']['options'])
+			|| (count($_POST['meta']['options']['v']) == 1 && !isset($_POST['meta']['options']['v'][1]['options']) ) ) {
 				$_POST['options'] = $Category->options = array();
 				$_POST['prices'] = $Category->prices = array();
-		} else $_POST['options'] = stripslashes_deep($_POST['options']);
-		if (isset($_POST['content'])) $_POST['description'] = $_POST['content'];
+		}
 
-		$Category->updates($_POST);
+		$metaprops = array('spectemplate','facetedmenus','variations','pricerange','priceranges','specs','options','prices');
+		$metadata = array_filter_keys($_POST, $metaprops);
+
+		// Update existing entries
+		$updates = array();
+		foreach ($Category->meta as $id => $MetaObject) {
+			$name = $MetaObject->name;
+			if ( isset($metadata[ $name ]) ) {
+				$MetaObject->value = stripslashes_deep($metadata[ $name ]);
+				$updates[] = $name;
+			}
+		}
+
+		// Create any new missing meta entries
+		$new = array_diff(array_keys($metadata), $updates); // Determine new entries from the exsting updates
+		foreach ( $new as $name ) {
+			if ( ! isset($metadata[ $name ]) ) continue;
+	        $Meta = new MetaObject();
+	        $Meta->name = $name;
+			$Meta->value = stripslashes_deep($metadata[ $name ]);
+	        $Category->meta[] = $Meta;
+		}
+
 		$Category->save();
+
+		if (!empty($_POST['deleteImages'])) {
+			$deletes = array();
+			if (strpos($_POST['deleteImages'],","))	$deletes = explode(',', $_POST['deleteImages']);
+			else $deletes = array($_POST['deleteImages']);
+			$Category->delete_images($deletes);
+		}
 
 		if (!empty($_POST['images']) && is_array($_POST['images'])) {
 			$Category->link_images($_POST['images']);
@@ -385,9 +475,9 @@ class Categorize extends AdminController {
 			}
 		}
 
-		do_action_ref_array('shopp_category_saved',array(&$Category));
+		do_action_ref_array('shopp_category_saved', array($Category));
 
-		$updated = '<strong>'.$Category->name.'</strong> '.__('category saved.','Shopp');
+		$this->notice(Shopp::__('%s category saved.', '<strong>' . $Category->name . '</strong>'));
 
 	}
 
@@ -397,12 +487,11 @@ class Categorize extends AdminController {
 	 * @author Jonathan Davis
 	 * @since 1.1
 	 *
-	 * @return void Description...
+	 * @return void
 	 **/
-	function init_positions () {
-		$db =& DB::get();
+	public function init_positions () {
 		// Load the entire catalog structure and update the category positions
-		$Catalog = new Catalog();
+		$Catalog = new ShoppCatalog();
 		$Catalog->outofstock = true;
 
 		$filters['columns'] = "cat.id,cat.parent,cat.priority";
@@ -411,34 +500,8 @@ class Categorize extends AdminController {
 		foreach ($Catalog->categories as $Category)
 			if (!isset($Category->_priority) // Check previous priority and only save changes
 					|| (isset($Category->_priority) && $Category->_priority != $Category->priority))
-				$db->query("UPDATE $Category->_table SET priority=$Category->priority WHERE id=$Category->id");
+				sDB::query("UPDATE $Category->_table SET priority=$Category->priority WHERE id=$Category->id");
 
-	}
-
-	/**
-	 * Renders a drop-down menu for selecting parent categories
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.0
-	 * @param int $selection The id of the currently selected parent category
-	 * @param int $current The id of the currently edited category
-	 * @return void Description...
-	 **/
-	function menu ($selection=false,$current=false) {
-		$db = DB::get();
-		$table = DatabaseObject::tablename(Category::$table);
-		$categories = $db->query("SELECT id,name,parent FROM $table ORDER BY parent,name",AS_ARRAY);
-		$categories = sort_tree($categories);
-
-		$options = '';
-		foreach ($categories as $category) {
-			$padding = str_repeat("&nbsp;",$category->depth*3);
-			$selected = ($category->id == $selection)?' selected="selected"':'';
-			$disabled = ($current && $category->id == $current)?' disabled="disabled"':'';
-			$options .= '<option value="'.$category->id.'"'.$selected.$disabled.'>'.$padding.esc_html($category->name).'</option>';
-		}
-
-		return $options;
 	}
 
 	/**
@@ -448,11 +511,22 @@ class Categorize extends AdminController {
 	 * @since 1.0
 	 * @return void
 	 **/
-	function products_cols () {
-		register_column_headers('shopp_page_shopp-categories', array(
-			'move'=>'<img src="'.SHOPP_ADMIN_URI.'/icons/updating.gif" alt="updating" width="16" height="16" class="hidden" />',
-			'p'=>__('Product','Shopp'))
-		);
+	public function products_cols () {
+		register_column_headers($this->screen, array(
+			'name'      => '<div class="shoppui-spin-align"><div class="shoppui-spinner shoppui-spinfx shoppui-spinfx-steps8"></div></div>',
+			'title'     => Shopp::__('Product'),
+			'sold'      => Shopp::__('Sold'),
+			'gross'     => Shopp::__('Sales'),
+			'price'     => Shopp::__('Price'),
+			'inventory' => Shopp::__('Inventory'),
+			'featured'  => Shopp::__('Featured'),
+		));
+		add_action('manage_' . $this->screen . '_columns', array($this, 'products_manage_cols'));
+	}
+
+	public function products_manage_cols ( $columns ) {
+		unset($columns['move']);
+		return $columns;
 	}
 
 	/**
@@ -461,11 +535,10 @@ class Categorize extends AdminController {
 	 * @author Jonathan Davis
 	 * @return void
 	 **/
-	function products ($workflow=false) {
-		global $Shopp;
-		$db = DB::get();
+	public function products ( $workflow = false ) {
+		$Shopp = Shopp::object();
 
-		if ( !(is_shopp_userlevel() || current_user_can('shopp_categories')) )
+		if ( ! current_user_can('shopp_categories') )
 			wp_die(__('You do not have sufficient permissions to access this page.'));
 
 		$defaults = array(
@@ -473,7 +546,7 @@ class Categorize extends AdminController {
 			'per_page' => 500,
 			'id' => 0,
 			's' => ''
-			);
+		);
 		$args = array_merge($defaults,$_GET);
 		extract($args,EXTR_SKIP);
 
@@ -484,23 +557,10 @@ class Categorize extends AdminController {
 			$per_page = 20;
 		$start = ($per_page * ($pagenum-1));
 
-		$filters = array();
-		// $filters['limit'] = "$start,$per_page";
-		if (!empty($s))
-			$filters['where'] = "cat.name LIKE '%$s%'";
-		else $filters['where'] = "true";
+		$CategoryProducts = new ProductCategory($id);
+		$CategoryProducts->load(array('order'=>'recommended','pagination'=>false));
 
-		$Category = new Category($id);
-
-		$catalog_table = DatabaseObject::tablename(Catalog::$table);
-		$product_table = DatabaseObject::tablename(Product::$table);
-		$columns = "c.id AS cid,p.id,c.priority,p.name";
-		$where = "c.parent=$id AND type='category'";
-		$query = "SELECT $columns FROM $catalog_table AS c LEFT JOIN $product_table AS p ON c.product=p.id WHERE $where ORDER BY c.priority ASC,p.name ASC LIMIT $start,$per_page";
-		$products = $db->query($query);
-
-		$count = $db->query("SELECT count(*) AS total FROM $table");
-		$num_pages = ceil($count->total / $per_page);
+		$num_pages = ceil($CategoryProducts->total / $per_page);
 		$page_links = paginate_links( array(
 			'base' => add_query_arg( array('edit'=>null,'pagenum' => '%#%' )),
 			'format' => '',
@@ -515,11 +575,7 @@ class Categorize extends AdminController {
 			)
 		);
 
-
-		include(SHOPP_ADMIN_PATH."/categories/products.php");
+		include $this->ui('products.php');
 	}
 
-
-} // END class Categorize
-
-?>
+}

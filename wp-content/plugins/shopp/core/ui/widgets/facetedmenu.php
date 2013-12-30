@@ -9,44 +9,47 @@
  * @package shopp
  **/
 
-if (class_exists('WP_Widget')) {
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
 
-class ShoppFacetedMenuWidget extends WP_Widget {
+if ( class_exists('WP_Widget') && ! class_exists('ShoppFacetedMenuWidget') ) {
 
-    function ShoppFacetedMenuWidget() {
-        parent::WP_Widget(false,
-			$name = __('Shopp Faceted Menu','Shopp'),
-			array('description' => __('Category products drill-down search menu','Shopp'))
-		);
-    }
+	class ShoppFacetedMenuWidget extends WP_Widget {
 
-    function widget($args, $options) {
-		global $Shopp;
-		if (!empty($args)) extract($args);
+	    function __construct () {
+	        parent::__construct(false,
+				$name = __('Shopp Faceted Menu','Shopp'),
+				array('description' => __('Category products drill-down search menu','Shopp'))
+			);
+	    }
 
-		if (empty($options['title'])) $options['title'] = __('Product Filters','Shopp');
-		$title = $before_title.$options['title'].$after_title;
+	    function widget($args, $options) {
 
-		if (!empty($Shopp->Category->id) && $Shopp->Category->facetedmenus == "on") {
-			$menu = $Shopp->Category->tag('faceted-menu',$options);
-			echo $before_widget.$title.$menu.$after_widget;
-		}
-    }
+			if (!empty($args)) extract($args);
 
-    function update($new_instance, $old_instance) {
-        return $new_instance;
-    }
+			if (empty($options['title'])) $options['title'] = __('Product Filters','Shopp');
+			$title = $before_title.$options['title'].$after_title;
 
-    function form($options) {
-		?>
-		<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label>
-		<input type="text" name="<?php echo $this->get_field_name('title'); ?>" id="<?php echo $this->get_field_id('title'); ?>" class="widefat" value="<?php echo $options['title']; ?>"></p>
-		<?php
-    }
+			$Collection = ShoppCollection();
+			if (empty($Collection)) return;
 
-} // class ShoppFacetedMenuWidget
+			if (shopp('category','get-id') != '' && shopp('category','has-faceted-menu')) {
+				$menu = shopp('category','get-faceted-menu',$options);
+				echo $before_widget.$title.$menu.$after_widget;
+			}
+	    }
 
-register_widget('ShoppFacetedMenuWidget');
+	    function update($new_instance, $old_instance) {
+	        return $new_instance;
+	    }
+
+	    function form($options) {
+			?>
+			<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label>
+			<input type="text" name="<?php echo $this->get_field_name('title'); ?>" id="<?php echo $this->get_field_id('title'); ?>" class="widefat" value="<?php echo $options['title']; ?>"></p>
+			<?php
+	    }
+
+	} // class ShoppFacetedMenuWidget
+
 
 }
-?>

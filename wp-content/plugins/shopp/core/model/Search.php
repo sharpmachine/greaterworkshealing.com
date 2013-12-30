@@ -13,6 +13,8 @@
  * @subpackage search
  **/
 
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
+
 /**
  * IndexProduct class
  *
@@ -25,9 +27,9 @@
  **/
 class IndexProduct {
 
-	var $Product = false;
-	var $properties = array(
-		"name","prices","summary","description","specs","categories","tags"
+	public $Product = false;
+	public $properties = array(
+		'name','prices','summary','description','specs','categories','tags'
 	);
 
 	/**
@@ -36,10 +38,10 @@ class IndexProduct {
 	 * @author Jonathan Davis
 	 * @since 1.1
 	 *
-	 * @return void Description...
+	 * @return void
 	 **/
 	function __construct ($id) {
-		$this->Product = new Product($id);
+		$this->Product = new ShoppProduct($id);
 		$this->Product->load_data(array('prices','specs','categories','tags'));
 	}
 
@@ -52,7 +54,8 @@ class IndexProduct {
 	 * @return void
 	 **/
 	function index () {
-		foreach ($this->properties as $property) {
+		$properties = apply_filters('shopp_index_product_properties',$this->properties);
+		foreach ($properties as $property) {
 			switch ($property) {
 				case "prices":
 					$prices = array();
@@ -99,7 +102,7 @@ class IndexProduct {
  * @since 1.1
  * @package shopp
  **/
-class ContentIndex extends DatabaseObject {
+class ContentIndex extends ShoppDatabaseObject {
 	static $table = "index";
 
 	var $_loaded = false;
@@ -126,13 +129,12 @@ class ContentIndex extends DatabaseObject {
 	 * @param string $type Type of product property indexed
 	 * @return void
 	 **/
-	function load ($product,$type) {
+	function load ($product=false,$type=false) {
 		$this->product = $product;
 		$this->type = $type;
 		if (empty($product) || empty($type)) return false; // Nothing to load
 
-		$db = DB::get();
-		$r = $db->query("SELECT id,created FROM $this->_table WHERE product='$product' AND type='$type' LIMIT 1");
+		$r = sDB::query("SELECT id,created FROM $this->_table WHERE product='$product' AND type='$type' LIMIT 1");
 		if (!empty($r->id)) {
 			$this->id = $r->id;
 			$this->created = mktimestamp($r->created);
@@ -146,9 +148,11 @@ class ContentIndex extends DatabaseObject {
 	 * @author Jonathan Davis
 	 * @since 1.1
 	 *
-	 * @return void Description...
+	 * @param string $content The content to index
+	 * @return void
 	 **/
-	function save ($content) {
+	function save () {
+		list($content,) = func_get_args();
 		if (empty($this->product) || empty($this->type) || empty($content))
 			return false;
 
@@ -163,7 +167,7 @@ class ContentIndex extends DatabaseObject {
 
 } // END class ContentIndex
 
-if (!class_exists('SearchParser')):
+if ( ! class_exists('SearchParser',false) ):
 /**
  * SearchParser class
  *
@@ -187,6 +191,7 @@ class SearchParser extends SearchTextFilters {
 	function __construct () {
 		add_filter('shopp_search_query',array('SearchParser','MarkupFilter'));
 		add_filter('shopp_search_query',array('SearchParser','CurrencyFilter'));
+		add_filter('shopp_search_query',array('SearchParser','StopFilter'));
 		add_filter('shopp_search_query',array('SearchParser','AccentFilter'));
 		add_filter('shopp_search_query',array('SearchParser','LowercaseFilter'));
 		add_filter('shopp_search_query',array('SearchParser','NormalizeFilter'));
@@ -207,8 +212,8 @@ class SearchParser extends SearchTextFilters {
 		if (empty($matches)) return false;
 		$_->op = $matches[0][0][0];
 		$_->op = (in_array($_->op,array("<",">")))?$_->op:'';
-		$_->min = floatvalue($matches[0][1]);
-		$_->max = floatvalue($matches[0][4]);
+		$_->min = Shopp::floatval($matches[0][1]);
+		$_->max = Shopp::floatval($matches[0][4]);
 		$_->target = $_->min;
 		if ($_->max > 0) $_->op = "-"; // Range matching
 
@@ -224,7 +229,17 @@ class SearchParser extends SearchTextFilters {
 }
 endif;
 
-if (!class_exists('BooleanParser')):
+if ( ! class_exists('BooleanParser',false) ):
+/**
+ * BooleanParser class
+ *
+ * Prepares a search query for boolean matches
+ *
+ * @author Jonathan Davis
+ * @since 1.1
+ * @package shopp
+ * @subpackage search
+ **/
 class BooleanParser extends SearchTextFilters {
 
 	/**
@@ -237,19 +252,53 @@ class BooleanParser extends SearchTextFilters {
 	 **/
 	function __construct () {
 		add_filter('shopp_boolean_search',array('BooleanParser','MarkupFilter'));
-		add_filter('shopp_boolean_search',array('ContentParser','CurrencyFilter'));
+		add_filter('shopp_boolean_search',array('BooleanParser','CurrencyFilter'));
 		add_filter('shopp_boolean_search',array('BooleanParser','AccentFilter'));
+		add_filter('shopp_boolean_search',array('BooleanParser','StopFilter'));
 		add_filter('shopp_boolean_search',array('BooleanParser','LowercaseFilter'));
-		add_filter('shopp_boolean_search',array('BooleanParser','KeywordFilter'));
 		add_filter('shopp_boolean_search',array('BooleanParser','NormalizeFilter'));
 		add_filter('shopp_boolean_search',array('BooleanParser','StemFilter'));
+		add_filter('shopp_boolean_search',array('BooleanParser','KeywordFilter'));
 	}
 
 }
 endif;
 
+if ( ! class_exists('ShortwordParser',false) ):
+/**
+ * ShortwordParser class
+ *
+ * Prepares a search query for shortword RegExp matching
+ *
+ * @author Jonathan Davis
+ * @since 1.2
+ * @package shopp
+ * @subpackage search
+ **/
+class ShortwordParser extends SearchTextFilters {
 
-if (!class_exists('ContentParser')):
+	/**
+	 * Setup the filtering for shortword parsing
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.2
+	 *
+	 * @return void
+	 **/
+	function __construct () {
+		add_filter('shopp_shortword_search',array('ShortwordParser','MarkupFilter'));
+		add_filter('shopp_shortword_search',array('ShortwordParser','CurrencyFilter'));
+		add_filter('shopp_shortword_search',array('ShortwordParser','AccentFilter'));
+		add_filter('shopp_shortword_search',array('ShortwordParser','LowercaseFilter'));
+		add_filter('shopp_shortword_search',array('ShortwordParser','ShortwordFilter'));
+		add_filter('shopp_shortword_search',array('ShortwordParser','StopFilter'));
+		add_filter('shopp_shortword_search',array('ShortwordParser','NormalizeFilter'));
+	}
+
+}
+endif;
+
+if ( ! class_exists('ContentParser',false) ):
 class ContentParser extends SearchTextFilters {
 
 	/**
@@ -293,10 +342,8 @@ abstract class SearchTextFilters {
 	 * @return string The current currency regex pattern
 	 **/
 	static function _currency_regex ($symbol=true) {
-		$Settings = ShoppSettings();
-
-		$baseop = $Settings->get('base_operations');
-		extract($baseop['currency']['format']);
+		$format = Shopp::currency_format();
+		extract($format);
 
 		$pre = ($cpos?''.preg_quote($currency).($symbol?'':'?'):'');
 		$amount = '[\d'.preg_quote($thousands).']+';
@@ -405,12 +452,9 @@ abstract class SearchTextFilters {
 	 * @return string Converted text
 	 **/
 	static function AccentFilter ($text) {
-		$text = preg_replace(
-					"/([\x{0020}-\x{0373}])/ue",
-					"iconv('UTF-8','ASCII//TRANSLIT','\\1')",
-					$text
-				);
-		return $text;
+		if (!function_exists('remove_accents'))
+			require( ABSPATH . WPINC . '/formatting.php' );
+		return remove_accents($text);
 	}
 
 	/**
@@ -439,6 +483,21 @@ abstract class SearchTextFilters {
             $token = strtok(' ');
         }
 		return implode(' ',$tokens);
+	}
+
+	/**
+	 * Strips longer search terms from the query
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.2
+	 *
+	 * @param string $text The query string to parse
+	 * @return string The shortword search string
+	 **/
+	static function ShortwordFilter ($text) {
+		$text = preg_replace('/\b\w{4,}\b/','',$text);
+		$text = preg_replace('/ +/','|',$text);
+		return $text;
 	}
 
 	/**
@@ -475,7 +534,8 @@ abstract class SearchTextFilters {
 			if ($stem != $token) $_[] = $stem;
 			$token = strtok(' ');
 		}
-		return $text.' '.join(' ',$_);
+
+		return !empty($_)?"$text ".join(' ',$_):$text;
 	}
 
 } // END class SearchTextFilters
@@ -853,5 +913,3 @@ class PorterStemmer {
     }
 
 } // END class PorterStemmer
-
-?>

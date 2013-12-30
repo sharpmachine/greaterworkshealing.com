@@ -1,68 +1,72 @@
 <?php
 /**
  * 2Checkout.com
- * @class _2Checkout
  *
  * @author Jonathan Davis
- * @version 1.1.5
  * @copyright Ingenesis Limited, 27 May, 2009
  * @package shopp
+ * @version 1.3
  * @since 1.1
- * @subpackage _2Checkout
- *
- * $Id: 2Checkout.php 1596 2010-12-29 16:18:25Z jond $
  **/
 
-class _2Checkout extends GatewayFramework implements GatewayModule {
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
+
+class Shopp2Checkout extends GatewayFramework implements GatewayModule {
 
 	// Settings
-	var $secure = false;
+	public $secure = false;
+	public $saleonly = true;
+	public $precision = 2;
+	public $decimals = '.';
+	public $thousands = '';
 
 	// URLs
-	var $url = 'https://www.2checkout.com/checkout/purchase';	// Multi-page checkout
-	var $surl = 'https://www.2checkout.com/checkout/spurchase'; // Single-page, CC-only checkout
+	public $url = 'https://www.2checkout.com/checkout/purchase';	// Multi-page checkout
+	public $surl = 'https://www.2checkout.com/checkout/spurchase'; // Single-page, CC-only checkout
 
-	function __construct () {
+	public function __construct () {
 		parent::__construct();
 
-		$this->setup('sid','verify','secret','returnurl','testmode');
+		$this->setup('sid','verify','secret','returnurl','testmode','singlepage');
 
-		global $Shopp;
-		$this->settings['returnurl'] = add_query_arg('rmtpay','process',shoppurl(false,'thanks',false));
+		$this->settings['returnurl'] = add_query_arg('rmtpay','process',Shopp::url(false,'thanks',false));
 
-		add_action('shopp_txn_update',array(&$this,'notifications'));
+		// add_action('shopp_txn_update',array(&$this,'notifications'));
+		add_action('shopp__2checkout_sale', array($this,'sale'));
+
 	}
 
-	function actions () {
+	public function actions () {
 		add_action('shopp_process_checkout', array(&$this,'checkout'),9);
 		add_action('shopp_init_checkout',array(&$this,'init'));
 
 		add_action('shopp_init_confirmation',array(&$this,'confirmation'));
 		add_action('shopp_remote_payment',array(&$this,'returned'));
-		add_action('shopp_process_order',array(&$this,'process'));
 	}
 
-	function confirmation () {
+	public function confirmation () {
 		add_filter('shopp_confirm_url',array(&$this,'url'));
 		add_filter('shopp_confirm_form',array(&$this,'form'));
 	}
 
-	function checkout () {
+	public function checkout () {
 		$this->Order->confirm = true;
 	}
 
-	function url ($url) {
+	public function url ($url) {
 		if ($this->settings['singlepage'] == "on") return $this->surl;
 		return $this->url;
 	}
 
-	function form ($form) {
-		$db =& DB::get();
+	public function form ($form) {
 
-		$purchasetable = DatabaseObject::tablename(Purchase::$table);
-		$next = $db->query("SELECT auto_increment as id FROM information_schema.tables WHERE table_schema=database() AND table_name='$purchasetable' LIMIT 1");
+		$purchasetable = ShoppDatabaseObject::tablename(ShoppPurchase::$table);
+		$next = sDB::query("SELECT IF ((MAX(id)) > 0,(MAX(id)+1),1) AS id FROM $purchasetable LIMIT 1");
 
 		$Order = $this->Order;
+		$Customer = $Order->Customer;
+		$Billing = $Order->Billing;
+		$Shipping = $Order->Shipping;
 		$Order->_2COcart_order_id = date('mdy').'-'.date('His').'-'.$next->id;
 
 		// Build the transaction
@@ -70,7 +74,7 @@ class _2Checkout extends GatewayFramework implements GatewayModule {
 
 		// Required
 		$_['sid']				= $this->settings['sid'];
-		$_['total']				= number_format($Order->Cart->Totals->total,$this->precision);
+		$_['total']				= $this->amount('total');
 		$_['cart_order_id']		= $Order->_2COcart_order_id;
 		$_['vendor_order_id']	= $this->session;
 		$_['id_type']			= 1;
@@ -86,79 +90,94 @@ class _2Checkout extends GatewayFramework implements GatewayModule {
 
 		// Line Items
 		foreach($this->Order->Cart->contents as $i => $Item) {
-			// $description[] = $Item->quantity."x ".$Item->name.((!empty($Item->optionlabel))?' '.$Item->optionlabel:'');
 			$id = $i+1;
 			$_['c_prod_'.$id]			= 'shopp_pid-'.$Item->product.','.$Item->quantity;
 			$_['c_name_'.$id]			= $Item->name;
-			$_['c_description_'.$id]	= !empty($Item->option->label)?$Item->$Item->option->label:'';
-			$_['c_price_'.$id]			= number_format($Item->unitprice,$this->precision);
+			$_['c_description_'.$id]	= !empty($Item->option->label)?$Item->option->label:'';
+			$_['c_price_'.$id]			= $this->amount($Item->unitprice);
 
 		}
 
-		$_['card_holder_name'] 		= $Order->Customer->firstname.' '.$Order->Customer->lastname;
-		$_['street_address'] 		= $Order->Billing->address;
-		$_['street_address2'] 		= $Order->Billing->xaddress;
-		$_['city'] 					= $Order->Billing->city;
-		$_['state'] 				= $Order->Billing->state;
-		$_['zip'] 					= $Order->Billing->postcode;
-		$_['country'] 				= $Order->Billing->country;
-		$_['email'] 				= $Order->Customer->email;
-		$_['phone'] 				= $Order->Customer->phone;
+		$_['card_holder_name'] 		= $Billing->name;
+		$_['street_address'] 		= $Billing->address;
+		$_['street_address2'] 		= $Billing->xaddress;
+		$_['city'] 					= $Billing->city;
+		$_['state'] 				= $Billing->state;
+		$_['zip'] 					= $Billing->postcode;
+		$_['country'] 				= $Billing->country;
+		$_['email'] 				= $Customer->email;
+		$_['phone'] 				= $Customer->phone;
 
-		$_['ship_name'] 			= $Order->Customer->firstname.' '.$Order->Customer->lastname;
-		$_['ship_street_address'] 	= $Order->Shipping->address;
-		$_['ship_street_address2'] 	= $Order->Shipping->xaddress;
-		$_['ship_city'] 			= $Order->Shipping->city;
-		$_['ship_state'] 			= $Order->Shipping->state;
-		$_['ship_zip'] 				= $Order->Shipping->postcode;
-		$_['ship_country'] 			= $Order->Shipping->country;
+		$_['ship_name'] 			= $Shipping->name;
+		$_['ship_street_address'] 	= $Shipping->address;
+		$_['ship_street_address2'] 	= $Shipping->xaddress;
+		$_['ship_city'] 			= $Shipping->city;
+		$_['ship_state'] 			= $Shipping->state;
+		$_['ship_zip'] 				= $Shipping->postcode;
+		$_['ship_country'] 			= $Shipping->country;
 
 		return $form.$this->format($_);
 	}
 
-	function returned () {
-		// Run order processing
-		if (!empty($_POST['order_number']))
-			do_action('shopp_process_order');
-	}
+	public function returned () {
 
-	function process () {
-		global $Shopp;
-
-		if ($this->settings['verify'] == "on" && !$this->verify($_POST['key'])) {
+		if (Shopp::str_true($this->settings['verify']) && !$this->verify($_POST['key'])) {
 			new ShoppError(__('The order submitted to 2Checkout could not be verified.','Shopp'),'2co_validation_error',SHOPP_TRXN_ERR);
-			shopp_redirect(shoppurl(false,'checkout'));
+			Shopp::redirect( Shopp::url( false, 'checkout' ) );
+
 		}
 
 		if (empty($_POST['order_number'])) {
 			new ShoppError(__('The order submitted by 2Checkout did not specify a transaction ID.','Shopp'),'2co_validation_error',SHOPP_TRXN_ERR);
-			shopp_redirect(shoppurl(false,'checkout'));
+			Shopp::redirect( Shopp::url( false, 'checkout' ) );
 		}
 
-		$txnid = $_POST['order_number'];
-		$txnstatus = $_POST['credit_card_processed'] == "Y"?'CHARGED':'PENDING';
+		// Create the order and begin processing it
+		shopp_add_order_event(false, 'purchase', array(
+			'gateway' => $this->module,
+			'txnid' => $_POST['order_number']
+		));
 
-		$Shopp->Order->transaction($txnid,$txnstatus);
+		ShoppOrder()->purchase = ShoppPurchase()->id;
+		Shopp::redirect( Shopp::url(false, 'thanks', false) );
 
 	}
 
-	function notification () {
+	public function sale ($Event) {
+
+		$Paymethod = $this->Order->paymethod();
+		$Billing = $this->Order->Billing;
+
+		shopp_add_order_event($Event->order, 'authed', array(
+			'txnid' => $_POST['order_number'],						// Transaction ID
+			'amount' => $_POST['total'],							// Gross amount authorized
+			'gateway' => $this->module,								// Gateway handler name (module name from @subpackage)
+			'paymethod' => $Paymethod->label,						// Payment method (payment method label from payment settings)
+			'paytype' => $Billing->cardtype,						// Type of payment (check, MasterCard, etc)
+			'payid' => $Billing->card,								// Payment ID (last 4 of card or check number)
+			'capture' => true										// Capture flag
+		));
+
+	}
+
+	public function notification () {
 		// INS updates not implemented
 	}
 
-	function verify ($key) {
-		if ($this->settings['testmode'] == "on") return true;
+	public function verify ($key) {
+		if ( Shopp::str_true($this->settings['testmode']) ) return true;
 		$order = $_POST['order_number'];
 
-		$verification = strtoupper(md5($this->settings['secret'].
-							$this->settings['sid'].
-							$order.
-							number_format($this->Order->Cart->Totals->total,$this->precision)));
+		$verification = strtoupper(md5($this->settings['secret'] .
+							$this->settings['sid'] .
+							$order .
+							$this->amount('total')
+						));
 
-		return ($verification == $key);
+		return ( $verification == $key );
 	}
 
-	function settings () {
+	public function settings () {
 
 		$this->ui->text(0,array(
 			'name' => 'sid',
@@ -210,20 +229,18 @@ class _2Checkout extends GatewayFramework implements GatewayModule {
 			'content' => '<span style="width: 300px;">&nbsp;</span>'
 		));
 
-		$this->verifysecret();
+		$this->ui->behaviors( $this->secretjs() );
 	}
 
-	function verifysecret () {
-?>
-		_2Checkout.behaviors = function () {
-			$('#settings-_2checkout-verify').change(function () {
-				if ($(this).attr('checked')) $('#settings-_2checkout-secret').parent().show();
-				else $('#settings-_2checkout-secret').parent().hide();
-			}).change();
-		}
+	public function secretjs () {
+		ob_start(); ?>
+jQuery(document).bind('_2checkoutSettings',function () {
+	var $=jqnc(),p='#_2checkout-',v=$(p+'verify'),s=$(p+'secret');
+	v.change(function () { v.attr('checked') ? s.parent().fadeIn('fast') : s.parent().hide(); }).change();
+});
 <?php
+		$script = ob_get_contents(); ob_end_clean();
+		return $script;
 	}
 
-} // END class _2Checkout
-
-?>
+}

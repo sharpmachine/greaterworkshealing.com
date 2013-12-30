@@ -5,19 +5,28 @@
  * Shopp settings manager
  *
  * @author Jonathan Davis
- * @version 1.1
- * @copyright Ingenesis Limited, 28 March, 2008
+ * @version 1.2
+ * @copyright 2008-2011 Ingenesis Limited
  * @license GNU GPL version 3 (or later) {@see license.txt}
  * @package shopp
  * @since 1.0
  * @subpackage settings
  **/
-class Settings extends DatabaseObject {
-	static $table = "setting";
 
-	var $registry = array();	// Registry of setting objects
-	var $available = true;		// Flag when database tables don't exist
-	var $_table = "";			// The table name
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
+
+class ShoppSettings extends ShoppDatabaseObject {
+
+	static $table = 'meta';			// Base settings table name
+
+	private static $object;			// Keep private reference to running object
+
+	private $registry = array();	// Registry of setting objects
+	private $installed = false;		// Flag when database tables don't exist
+	private $loaded = false;		// Flag when settings are successfully loaded
+	private $bootup = false;		// Load process in progress
+
+	public $_table;					// Settings runtime table name
 
 	/**
 	 * Settings object constructor
@@ -28,13 +37,26 @@ class Settings extends DatabaseObject {
 	 * @author Jonathan Davis
 	 * @since 1.0
 	 * @version 1.1
-	 *
-	 * @return void
 	 **/
-	function __construct ($name="") {
+	private function __construct () {
 		$this->_table = $this->tablename(self::$table);
-		if (!$this->load($name))	// If no settings are loaded
-			$this->availability();	// update the Shopp tables availability status
+		$this->bootup = ShoppLoader::is_activating();
+
+		if ( $this->bootup ) add_action('shopp_init', array($this, 'booted'));
+	}
+
+	/**
+	 * Once Shopp has init'd this will take us back out of bootup mode and allow access to the
+	 * db.
+	 */
+	public function booted () {
+		$this->bootup = false;
+	}
+
+	public static function object () {
+		if ( ! self::$object instanceof self )
+			self::$object = new self;
+		return self::$object;
 	}
 
 	/**
@@ -45,33 +67,41 @@ class Settings extends DatabaseObject {
 	 *
 	 * @return boolean
 	 **/
-	function availability () {
-		$this->available = $this->init('setting');
-		return $this->available;
+	public function available () {
+		return ($this->loaded && !empty($this->registry));
 	}
 
 	/**
 	 * Load settings from the database
-	 *
-	 * By default, loads all settings with an autoload parameter
-	 * set to "on". Otherwise, loads an individual setting explicitly
-	 * regardless of the autoload parameter.
 	 *
 	 * @author Jonathan Davis
 	 * @since 1.0
 	 *
 	 * @return boolean
 	 **/
-	function load ($name="") {
-		$db = DB::get();
-		if (!empty($name)) $results = $db->query("SELECT name,value FROM $this->_table WHERE name='$name'",AS_ARRAY,false);
-		else $results = $db->query("SELECT name,value FROM $this->_table WHERE autoload='on'",AS_ARRAY,false);
+	public function load ( $name = '', $arg2 = false ) {
 
-		if (!is_array($results) || sizeof($results) == 0) return false;
-		while(list($key,$entry) = each($results)) $settings[$entry->name] = $this->restore($entry->value);
+		if ( ! empty($name) ) $where[] = "name='" . sDB::clean($name) . "'";
+		else {
+			if ($this->bootup) return false; // Already trying to load all settings, bail out to prevent an infinite loop of DOOM!
+			$this->bootup = true;
+		}
 
-		if (!empty($settings)) $this->registry = array_merge($this->registry,$settings);
-		return true;
+		$Setting = $this->setting();
+		$where = array("parent=0", "context='$Setting->context'", "type='$Setting->type'");
+		$where = join(' AND ',$where);
+
+		$settings = sDB::query("SELECT name,value FROM $this->_table WHERE $where", 'array', array($this, 'register'));
+
+		if ( ! is_array($settings) || count($settings) == 0 ) return false;
+		if ( ! empty($settings) ) $this->registry = array_merge($this->registry, $settings);
+
+		$this->bootup = false;
+		return ($this->loaded = true);
+	}
+
+	public function register (&$records,$record) {
+		$records[$record->name] = $this->restore($record->value);
 	}
 
 	/**
@@ -82,20 +112,17 @@ class Settings extends DatabaseObject {
 	 *
 	 * @param string $name Name of the setting
 	 * @param mixed $value Value of the setting
-	 * @param boolean $autoload (optional) Automatically load the setting - default true
 	 * @return boolean
 	 **/
-	function add ($name, $value,$autoload = true) {
-		$db = DB::get();
+	public function add ($name, $value) {
 		$Setting = $this->setting();
 		$Setting->name = $name;
-		$Setting->value = $db->clean($value);
-		$Setting->autoload = ($autoload)?'on':'off';
+		$Setting->value = sDB::clean($value);
 
-		$data = $db->prepare($Setting);
-		$dataset = DatabaseObject::dataset($data);
-		if ($db->query("INSERT $this->_table SET $dataset"))
-		 	$this->registry[$name] = $this->restore($db->clean($value));
+		$data = sDB::prepare($Setting);
+		$dataset = ShoppDatabaseObject::dataset($data);
+		if ( sDB::query("INSERT $this->_table SET $dataset") )
+		 	$this->registry[$name] = $this->restore(sDB::clean($value));
 		else return false;
 		return true;
 	}
@@ -110,19 +137,21 @@ class Settings extends DatabaseObject {
 	 * @param mixed $value Value of the setting to update
 	 * @return boolean
 	 **/
-	function update ($name,$value) {
-		$db = DB::get();
+	public function update ($name,$value) {
 
 		if ($this->get($name) == $value) return true;
 
 		$Setting = $this->setting();
 		$Setting->name = $name;
-		$Setting->value = $db->clean($value);
-		unset($Setting->autoload);
-		$data = $db->prepare($Setting);				// Prepare the data for db entry
-		$dataset = DatabaseObject::dataset($data);	// Format the data in SQL
+		$Setting->value = sDB::clean($value);
+		$data = sDB::prepare($Setting);				// Prepare the data for db entry
+		$dataset = ShoppDatabaseObject::dataset($data);	// Format the data in SQL
 
-		if ($db->query("UPDATE $this->_table SET $dataset WHERE name='$Setting->name'"))
+		$where = array("context='$Setting->context'","type='$Setting->type'");
+		if (!empty($name)) $where[] = "name='".sDB::clean($name)."'";
+		$where = join(' AND ',$where);
+
+		if (sDB::query("UPDATE $this->_table SET $dataset WHERE $where"))
 			$this->registry[$name] = $this->restore($value); // Update the value in the registry
 		else return false;
 		return true;
@@ -131,24 +160,22 @@ class Settings extends DatabaseObject {
 	/**
 	 * Save a setting to the database
 	 *
-	 * Sets an autoload parameter to determine whether the data is
-	 * automatically loaded into the registry, or must be loaded
-	 * explicitly using the get() method.
-	 *
 	 * @author Jonathan Davis
 	 * @since 1.0
 	 *
 	 * @param string $name Name of the setting to save
 	 * @param mixed $value Value of the setting
-	 * @param boolean $autoload (optional) The autoload setting - true by default
 	 * @return void
 	 **/
-	function save ($name,$value,$autoload=true) {
-		// Update or Insert as needed
-		if ($this->get($name) === false) $this->add($name,$value,$autoload);
-		else $this->update($name,$value);
-	}
+	public function save ($name=false,$value=false) {
 
+		if ( empty($name) ) return false;
+
+		// Update or Insert as needed
+		if ( is_null($this->get($name)) ) $this->add($name,$value);
+		else $this->update($name,$value);
+
+	}
 
 	/**
 	 * Save a setting to the database if it does not already exist
@@ -158,11 +185,10 @@ class Settings extends DatabaseObject {
 	 *
 	 * @param string $name Name of the setting to save
 	 * @param mixed $value Value of the setting
-	 * @param boolean $autoload (optional) The autoload setting - true by default
 	 * @return void
 	 **/
-	function setup ($name,$value,$autoload=true) {
-		if ($this->get($name) === false) $this->add($name,$value,$autoload);
+	public function setup ($name,$value) {
+		if (is_null($this->get($name))) $this->add($name, $value);
 	}
 
 	/**
@@ -174,10 +200,17 @@ class Settings extends DatabaseObject {
 	 * @param string $name Name of the setting to remove
 	 * @return boolean
 	 **/
-	function delete ($name) {
-		$db = DB::get();
-		unset($this->registry[$name]);
-		if (!$db->query("DELETE FROM $this->_table WHERE name='$name'")) return false;
+	public function delete ($name=false) {
+		$null = null;
+		if (empty($name)) return false;
+		$Setting = $this->setting();
+
+		$where = array("context='$Setting->context'","type='$Setting->type'");
+		if (!empty($name)) $where[] = "name='".sDB::clean($name)."'";
+		$where = join(' AND ',$where);
+
+		if (!sDB::query("DELETE FROM $this->_table WHERE $where")) return false;
+		if (isset($this->registry[$name])) $this->registry[$name] = $null;
 		return true;
 	}
 
@@ -185,31 +218,35 @@ class Settings extends DatabaseObject {
 	 * Get a specific setting from the registry
 	 *
 	 * If no setting is available in the registry, try
-	 * loading from the database.
+	 * loading it directly from the database.
 	 *
 	 * @author Jonathan Davis
 	 * @since 1.0
 	 *
+	 * @param string $name The name of the setting
 	 * @return mixed The value of the setting
 	 **/
-	function get ($name) {
-		global $Shopp;
+	public function &get ( $name ) {
 
-		$value = false;
-		if (isset($this->registry[$name])) {
-			return $this->registry[$name];
-		} elseif ($this->load($name)) {
-			$value = $this->registry[$name];
+		$null = null;
+
+		if ( $this->bootup ) {// Prevent infinite loop of DOOM!
+			return $null;
 		}
 
-		// Return false and add an entry to the registry
-		// to avoid repeat database queries
-		if (!isset($this->registry[$name])) {
-			$this->registry[$name] = false;
-			return false;
-		}
+		if ( ! $this->available() )
+			$this->load();
 
-		return $value;
+		if ( ! array_key_exists($name,$this->registry) )
+			$this->load($name);
+
+		if ( ! isset($this->registry[$name]) )	// Return null and add an entry to the registry
+			$this->registry[$name] = $null;		// to avoid repeat database queries
+
+		$setting = apply_filters( 'shopp_get_setting', $this->registry[$name], $name);
+
+		return $setting;
+
 	}
 
 	/**
@@ -221,14 +258,13 @@ class Settings extends DatabaseObject {
 	 * @param string $value A value to restore if necessary
 	 * @return mixed
 	 **/
-	function restore ($value) {
-		if (!is_string($value)) return $value;
+	public function restore ($value) {
+		if ( ! is_string($value) ) return $value;
 		// Return unserialized, if serialized value
-		if (preg_match("/^[sibNaO](?:\:.+?\{.*\}$|\:.+;$|;$)/s",$value)) {
+		if ( is_serialized($value) ) {
 			$restored = unserialize($value);
-			if (!empty($restored)) return $restored;
-			$restored = unserialize(stripslashes($value));
-			if ($restored !== false) return $restored;
+			if ( empty($restored) ) $restored = unserialize( stripslashes($value) );
+			if ( false !== $restored ) return $restored;
 		}
 		return $value;
 	}
@@ -241,12 +277,15 @@ class Settings extends DatabaseObject {
 	 *
 	 * @return object
 	 **/
-	function setting () {
-		$setting->_datatypes = array("name" => "string", "value" => "string", "autoload" => "list",
-			"created" => "date", "modified" => "date");
+	public function setting () {
+		$setting = new stdClass();
+		$setting->_datatypes = array( 'context' => 'string', 'type' => 'string',
+									  'name' => 'string', 'value' => 'string',
+									  'created' => 'date', 'modified' => 'date' );
+		$setting->context = 'shopp';
+		$setting->type = 'setting';
 		$setting->name = null;
 		$setting->value = null;
-		$setting->autoload = null;
 		$setting->created = null;
 		$setting->modified = null;
 		return $setting;
@@ -260,25 +299,35 @@ class Settings extends DatabaseObject {
 	 *
 	 * @return void
 	 **/
-	function saveform () {
-		if (empty($_POST['settings']) || !is_array($_POST['settings'])) return false;
-		foreach ($_POST['settings'] as $setting => $value)
-			$this->save($setting,$value);
+	public function saveform () {
+		if ( empty($_POST['settings']) || ! is_array($_POST['settings']) ) return false;
+		foreach ( $_POST['settings'] as $setting => $value )
+			$this->save($setting, stripslashes_deep($value));
+	}
+
+	/**
+	 * Provides the installed database schema version from the database (if available)
+	 *
+	 * Queries the database to get the installed database version number. If not available,
+	 * also checks the legacy
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.3
+	 *
+	 * @param string $legacy Set to anything but boolean false to attempt to lookup the version from the pre-1.2 settings table
+	 * @return integer The installed database schema version number (0 means not installed)
+	 **/
+	public static function dbversion ( $legacy = false ) {
+
+		$source = $legacy ? 'setting' : self::$table;
+		$table = ShoppDatabaseObject::tablename($source);
+		$version = sDB::query("SELECT value FROM $table WHERE name='db_version' ORDER BY id DESC LIMIT 1", 'object', 'col');
+
+		// Try again using the legacy table
+		if ( false === $version && false === $legacy ) $version = self::dbversion('legacy');
+
+	 	ShoppSettings()->registry['db_version'] = (int)$version;
+		return (int)$version;
 	}
 
 } // END class Settings
-
-/**
- * Helper to access the Shopp settings registry
- *
- * @author Jonathan Davis
- * @since 1.1
- *
- * @return void Description...
- **/
-function &ShoppSettings () {
-	global $Shopp;
-	return $Shopp->Settings;
-}
-
-?>

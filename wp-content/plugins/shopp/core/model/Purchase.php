@@ -1,93 +1,620 @@
 <?php
 /**
- * Purchase class
+ * Purchase.php
+ *
  * Order invoice logging
  *
  * @author Jonathan Davis
  * @version 1.0
- * @copyright Ingenesis Limited, 28 March, 2008
+ * @copyright Ingenesis Limited, March, 2008
  * @package shopp
+ * @subpackage purchase
  **/
 
-require_once("Purchased.php");
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
 
-class Purchase extends DatabaseObject {
-	static $table = "purchase";
-	var $purchased = array();
-	var $columns = array();
-	var $downloads = false;
+class ShoppPurchase extends ShoppDatabaseObject {
 
-	function Purchase ($id=false,$key=false) {
+	static $table = 'purchase';
+
+	public $purchased = array();
+	public $columns = array();
+	public $message = array();
+	public $data = array();
+	public $discounts = array();
+
+	// Balances
+	public $invoiced = false;	// Amount invoiced
+	public $authorized = false;	// Amount authorized
+	public $captured = false;	// Amount captured
+	public $refunded = false;	// Amount refunded
+	public $voided = false;		// Order cancelled prior to capture
+	public $balance = 0;		// Current balance
+
+	public $inventory = false;
+	public $downloads = false;
+	public $shipable = false;
+	public $shipped = false;
+	public $stocked = false;
+
+	public function __construct ( $id = false, $key = false ) {
 
 		$this->init(self::$table);
-		if (!$id) return true;
-		if ($this->load($id,$key)) return true;
-		else return false;
+		if ( ! $id ) return true;
+		$this->load($id, $key);
+		if ( ! empty($this->shipmethod) ) $this->shipable = true;
+
 	}
 
-	function load_purchased () {
-		$db = DB::get();
+	public function load_events () {
+		$this->events = OrderEvent::events($this->id);
+		$this->invoiced = false;
+		$this->authorized = false;
+		$this->captured = false;
+		$this->refunded = false;
+		$this->voided = false;
+		$this->balance = 0;
 
-		$table = DatabaseObject::tablename(Purchased::$table);
-		$meta = DatabaseObject::tablename(MetaObject::$table);
-		if (empty($this->id)) return false;
-		$this->purchased = $db->query("SELECT * FROM $table WHERE purchase=$this->id",AS_ARRAY);
-		foreach ($this->purchased as &$purchase) {
-			if (!empty($purchase->download)) $this->downloads = true;
-			$purchase->data = unserialize($purchase->data);
-			if ($purchase->addons == "yes") {
-				$purchase->addons = new ObjectMeta($purchase->id,'purchased','addon');
-				if (!$purchase->addons) $purchase->addons = new ObjectMeta();
+		foreach ( $this->events as $Event ) {
+			switch ( $Event->name ) {
+				case 'invoiced': $this->invoiced += $Event->amount; break;
+				case 'authed': $this->authorized += $Event->amount; break;
+				case 'captured': $this->captured += $Event->amount; break;
+				case 'refunded': $this->refunded += $Event->amount; break;
+				case 'voided': $Event->amount = $this->balance; $this->voided += $Event->amount; $Event->credit = true; break;
+				case 'shipped': $this->shipped = true; $this->shipevent = $Event; break;
+			}
+			if ( isset($Event->transactional) ) {
+				$this->txnevent = $Event;
+
+				if ( $Event->credit ) $this->balance -= $Event->amount;
+				elseif ( $Event->debit ) $this->balance += $Event->amount;
 			}
 		}
+	}
+
+	/**
+	 * Load the purchased records for this order
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.0
+	 *
+	 * @return boolean True if successfully loaded, false otherwise
+	 **/
+	public function load_purchased () {
+		if ( empty($this->id) ) return false;
+
+		$table = ShoppDatabaseObject::tablename(Purchased::$table);
+		$price = ShoppDatabaseObject::tablename(ShoppPrice::$table);
+
+		$this->purchased = sDB::query(
+			"SELECT pd.*,pr.inventory FROM $table AS pd LEFT JOIN $price AS pr ON pr.id=pd.price WHERE pd.purchase=$this->id",
+			'array',
+			array($this, 'purchases')
+		);
 
 		return true;
 	}
 
-	function notification ($addressee,$address,$subject,$template="order.php",$receipt="receipt.php") {
-		global $Shopp;
+	/**
+	 * Callback for loading purchased objects from a record set
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.2
+	 *
+	 * @param array $records A reference to the loaded record set
+	 * @param object $record A reference to the individual record to process
+	 * @return void
+	 **/
+	public function purchases ( array &$records, &$record ) {
+
+		$ShoppPurchased = 'ShoppPurchased';
+		if ( ! class_exists($ShoppPurchased) ) return;
+
+		$Purchased = new $ShoppPurchased();
+		$Purchased->populate($record);
+
+		$index = $record->id;
+
+		if ( ! empty($Purchased->download) ) $this->downloads = true;
+		if ( 'Shipped' == $Purchased->type ) $this->shipable = true;
+		if ( isset($record->inventory) ) {
+			$Purchased->inventory = Shopp::str_true($record->inventory);
+			if ( $Purchased->inventory ) $this->stocked = true;
+		}
+
+		if ( is_string($Purchased->data) )
+			$Purchased->data = maybe_unserialize($Purchased->data);
+
+		if ( 'yes' == $Purchased->addons ) { // Map addons and set flags
+
+			$Purchased->addons = new ObjectMeta($Purchased->id, 'purchased', 'addon');
+
+			if ( ! $Purchased->addons )
+				$Purchased->addons = new ObjectMeta();
+
+			foreach ( $Purchased->addons->meta as $Addon ) {
+				$addon = $Addon->value;
+				if ( 'Download' == $addon->type ) $this->downloads = true;
+				if ( 'Shipped' == $addon->type ) $this->shipable = true;
+				if ( Shopp::str_true($addon->inventory) ) $this->stocked = true;
+			}
+
+		}
+
+		$records[ $index ] = $Purchased;
+	}
+
+	/**
+	 * Set or load the discounts applied to this order
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.3
+	 *
+	 * @param ShoppDiscounts $ShoppDiscounts The ShoppDiscounts object from the order to add to this purchase
+	 * @return array List of discounts applied
+	 **/
+	public function discounts ( ShoppDiscounts $ShoppDiscounts = null ) {
+		if ( empty($this->id) ) return false;
+
+		if ( isset($ShoppDiscounts) ) { // Save the given discounts
+			$discounts = array();
+			foreach ( $ShoppDiscounts as $Discount )
+				$discounts[ $Discount->id() ] = new ShoppPurchaseDiscount($Discount);
+
+			shopp_set_meta($this->id, 'purchase', 'discounts', $discounts);
+			$this->discounts = $discounts;
+			ShoppPromo::used(array_keys($discounts));
+		}
+
+		if ( empty($this->discounts) ) $this->discounts = shopp_meta($this->id, 'purchase', 'discounts');
+		return $this->discounts;
+	}
+
+	/**
+	 * Set or load the taxes applied to this order
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.3
+	 *
+	 * @param array $OrderTaxes A list of OrderAmountItemTax entries
+	 * @return array The list of taxes applied to the order
+	 **/
+	public function taxes ( array $OrderTaxes = array() ) {
+		if ( empty($this->id) ) return false;
+
+		if ( ! empty($OrderTaxes) ) { // Save the given taxes
+			$taxes = array();
+			foreach ( (array) $OrderTaxes as $Tax )
+				$taxes[ $Tax->id() ] = new ShoppPurchaseTax($Tax);
+			shopp_set_meta($this->id, 'purchase', 'taxes', $taxes);
+			$this->taxes = $taxes;
+		}
+
+		if ( empty($this->taxes) ) $this->taxes = shopp_meta($this->id, 'purchase', 'taxes');
+		return $this->taxes;
+	}
+
+	/**
+	 * Creates or retrieves temporary account registration information for the order
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.3
+	 *
+	 * @return array A list of the registration objects
+	 **/
+	public function registration ( $args = false ) {
+		if ( empty($this->id) ) return false;
+		$args = func_get_args();
+
+		if ( count($args) == 1 && 'cleanup' == reset($args) )
+			return shopp_rmv_meta($this->id, 'purchase', 'registration');
+
+		$registration = array();
+		$objectmap = array(
+			'ShoppCustomer' => 'Customer',
+			'BillingAddress' => 'Billing',
+			'ShippingAddress' => 'Shipping'
+		);
+
+		foreach ( $args as $Object ) {
+			$class = is_object($Object) ? get_class($Object) : '';
+
+			$Record = new StdClass;
+			$properties = array_keys($Object->_datatypes);
+			foreach ( $properties as $property )
+				if ( isset($Object->$property) ) $Record->$property = $Object->$property;
+
+			if ( 'ShoppCustomer' == $class ) { // hash the password before storage
+				$Object->hashpass();
+				$Record->passhash = $Object->passhash;
+				$Record->loginname = $Object->loginname;
+			}
+
+			if ( isset($objectmap[ $class ]) )
+				$registration[ $objectmap[ $class ] ] = $Record;
+		}
+
+		if ( ! empty($registration) )
+			shopp_set_meta($this->id, 'purchase', 'registration', $registration);
+
+		$meta = shopp_meta($this->id, 'purchase', 'registration');
+
+		return $meta;
+	}
+
+	/**
+	 * Detects when the purchase has been voided
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.2.2
+	 *
+	 * @return boolean
+	 **/
+	public function isrefunded () {
+		if (empty($this->events)) $this->load_events();
+		return ($this->refunded == $this->captured);
+	}
+
+	/**
+	 * Detects when the purchase has been voided
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.2.2
+	 *
+	 * @return boolean
+	 **/
+	public function isvoid () {
+		if (empty($this->events)) $this->load_events();
+		return ($this->voided > 0 && $this->voided >= $this->invoiced);
+	}
+
+	/**
+	 * Detects when the purchase has been paid in full
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.2.2
+	 *
+	 * @return boolean
+	 **/
+	public function ispaid () {
+		if ( empty($this->events) ) $this->load_events();
+		$legacy = ( 0 == $this->captured && in_array($this->txnstatus, array('CHARGED','captured')) );
+		return ($this->captured == $this->total || $legacy);
+	}
+
+	public function capturable () {
+		if (!$this->authorized) return 0.0;
+		return ($this->authorized - (float)$this->captured);
+	}
+
+	public function refundable () {
+		if (!$this->captured) return 0.0;
+		return ($this->captured - (float)$this->refunded);
+	}
+
+	public function gateway () {
+		$Shopp = Shopp::object();
+		$Gateways = $Shopp->Gateways;
+
+		$processor = $this->gateway;
+		if ( 'ShoppFreeOrder' == $processor ) return $Gateways->freeorder;
+		if ( isset($Gateways->active[ $processor ]) ) return $Gateways->active[ $processor ];
+		else {
+			foreach ( $Gateways->active as $Gateway ) {
+				if ($processor != $Gateway->name) continue;
+				return $Gateway;
+				break;
+			}
+		}
+		return false;
+	}
+
+	public static function unstock ( UnstockOrderEvent $Event ) {
+		if ( empty($Event->order) ) return shopp_debug('Can not unstock. No event order.');
+
+		$Purchase = $Event->order();
+		if ( ! $Purchase->stocked ) return true; // no inventory in purchase
+
+		$prices = array();
+		$allocated = array();
+		foreach ( $Purchase->purchased as $Purchased ) {
+			if ( is_a($Purchased->addons, 'ObjectMeta') && ! empty($Purchased->addons->meta) ) {
+				foreach ( $Purchased->addons->meta as $index => $Addon ) {
+					if ( ! Shopp::str_true($Addon->value->inventory) ) continue;
+
+					$allocated[ $Addon->value->id ] = new PurchaseStockAllocation(array(
+						'purchased' => $Purchased->id,
+						'addon' => $index,
+						'sku' => $Addon->value->sku,
+						'price' => $Addon->value->id,
+						'quantity' => $Purchased->quantity
+					));
+
+					$prices[ $Addon->value->id ] = array(
+						$Purchased->name,
+						isset($prices[ $Addon->value->id ]) ? $prices[ $Addon->value->id ][1] + $Purchased->quantity : $Purchased->quantity
+					);
+				}
+			}
+
+			if ( ! Shopp::str_true($Purchased->inventory) ) continue;
+
+			$allocated[ $Purchased->id ] = new PurchaseStockAllocation(array(
+				'purchased' => $Purchased->id,
+				'sku' => $Purchased->sku,
+				'price' => $Purchased->price,
+				'quantity' => $Purchased->quantity
+			));
+
+			$prices[ $Purchased->price ] = array(
+				$Purchased->name,
+				isset($prices[ $Purchased->price ]) ? $prices[ $Purchased->price ][1] + $Purchased->quantity : $Purchased->quantity
+			);
+		}
+		if ( empty($allocated) ) return;
+
+		$pricetable = ShoppDatabaseObject::tablename(ShoppPrice::$table);
+		$lowlevel = shopp_setting('lowstock_level');
+		foreach ( $prices as $price => $data ) {
+			list($productname, $qty) = $data;
+			sDB::query("UPDATE $pricetable SET stock=(stock-" . (int)$qty . ") WHERE id='$price' LIMIT 1");
+			$inventory = sDB::query("SELECT label, stock, stocked FROM $pricetable WHERE id='$price' LIMIT 1", 'auto');
+
+			$product = "$productname, $inventory->label";
+			if ( 0 == $inventory->stock ) {
+				shopp_add_error(Shopp::__('%s is now out-of-stock!', $product), SHOPP_STOCK_ERR);
+			} elseif ( ($inventory->stock / $inventory->stocked * 100) <= $lowlevel ) {
+				shopp_add_error(Shopp::__('%s has low stock levels and should be re-ordered soon.', $product), SHOPP_STOCK_ERR);
+			}
+		}
+
+		$Event->unstocked($allocated);
+	}
+
+	/**
+	 * Updates a purchase order with transaction information from order events
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.2
+	 *
+	 * @param OrderEvent $Event The order event passed by the action hook
+	 * @return void
+	 **/
+	public static function event ( $Event ) {
+
+		$Purchase = $Event->order();
+
+		if ( ! $Purchase ) {
+			shopp_debug('Cannot update. No event order.');
+			return;
+		}
+
+		// Transaction status is the same as the event, no update needed
+		if ( $Purchase->txnstatus == $Event->name ) {
+			shopp_debug('Transaction status (' . $Purchase->txnstatus . ') for purchase order #' . $Purchase->id . ' is the same as the new event, no update necessary.');
+			return;
+		}
+
+		$status = false;
+		$txnid = false;
+
+		// Set transaction status from event name
+		$txnstatus = $Event->name;
+
+		if ( 'refunded' == $txnstatus ) { // Determine if this is fully refunded (previous refunds + this refund amount)
+			if ( empty($Purchase->events) ) $Purchase->load_events(); // Not refunded if less than captured, so don't update txnstatus
+			if ( $Purchase->refunded + $Event->amount < $Purchase->captured ) $txnstatus = false;
+		}
+		if ( 'voided' == $txnstatus ) { // Determine if the transaction has been cancelled
+			if ( empty($Purchase->events) ) $Purchase->load_events();
+			if ( $Purchase->captured ) $txnstatus = false; // If previously captured, don't mark voided
+		}
+		if ( 'shipped' == $txnstatus ) $txnstatus = false; // 'shipped' is not a valid txnstatus
+
+		// Set order workflow status from status label mapping
+		$labels = (array)shopp_setting('order_status');
+		$events = (array)shopp_setting('order_states');
+		$key = array_search($Event->name, $events);
+		if ( false !== $key && isset($labels[ $key ]) ) $status = (int)$key;
+
+		// Set the transaction ID if available
+		if ( isset($Event->txnid) && !empty($Event->txnid) ) $txnid = $Event->txnid;
+
+		$updates = compact('txnstatus', 'txnid', 'status');
+		$updates = array_filter($updates);
+
+		$data = sDB::escape($updates);
+		$data = array_map(create_function('$value', 'return "\'$value\'";'), $data);
+		$dataset = ShoppDatabaseObject::dataset($data);
+
+		if ( ! empty($dataset) ) {
+			$table = ShoppDatabaseObject::tablename(self::$table);
+			$query = "UPDATE $table SET $dataset WHERE id='$Event->order' LIMIT 1";
+			sDB::query($query);
+		}
+
+		$Purchase->updates($updates);
+
+		return;
+	}
+
+	/**
+	 * Send email notifications on order events
+	 *
+	 * @author Marc Neuhaus, Jonathan Davis
+	 * @since 1.2
+	 *
+	 * @param $Event OrderEvent $event The OrderEvent object passed by the hook
+	 * @return void
+	 */
+	public static function notifications ( $Event ) {
+
+		$Purchase = $Event->order();
+		if ( ! $Purchase ) return; // Only handle notifications for events relating to this order
+
+		$defaults = array('note');
+
+		$Purchase->message['event'] = $Event;
+		if ( ! empty($Event->note) ) $Purchase->message['note'] = &$Event->note;
+
+		// Generic filter hook for specifying global email messages
+		$messages = apply_filters('shopp_order_event_emails', array(
+			'customer' => array(
+				"$Purchase->firstname $Purchase->lastname",		// Recipient name
+				$Purchase->email,							// Recipient email address
+				sprintf(__('Your order with %s has been updated', 'Shopp'), shopp_setting('business_name')), // Subject
+				"email-$Event->name.php"),				// Template
+			'merchant' => array(
+				'',										// Recipient name
+				shopp_setting('merchant_email'),		// Recipient email address
+				sprintf(__('Order #%s: %s', 'Shopp'), $Purchase->id, $Event->label()), // Subject
+				"email-merchant-$Event->name.php")		// Template
+		));
+
+		// Event-specific hook for event specific email messages
+		$messages = apply_filters('shopp_' . $Event->name . '_order_event_emails', $messages);
+
+		foreach ( $messages as $name => $message ) {
+			list($addressee, $email, $subject, $template) = $message;
+
+			$templates = array($template);
+
+			// Add note kind-specific template support
+			if ( isset($Event->kind) && ! empty($Event->kind) ) {
+				list($basename, $php) = explode('.', $template);
+				$notekind = "$basename-$Event->kind.$php";
+				array_unshift($templates, $notekind);
+			}
+
+			// Always send messages to customers for default event types (note, etc)
+			if ( in_array($Event->name, $defaults) && 'customer' == $name )
+				$templates[] = 'email.php';
+
+			$file = Shopp::locate_template( $templates );
+			// Send email if the specific template is available
+			// and if an email has not already been sent to the recipient
+			if ( ! empty($file) && ! in_array($email, $Event->_emails) ) {
+
+				if ( $Purchase->email($addressee, $email, $subject, array($template)) )
+					$Event->_emails[] = $email;
+
+			}
+		}
+
+	}
+
+	/**
+	 * Separate class of order notifications for "successful" orders
+	 *
+	 * A successful order is conditionally based on the type of order being processed. An order
+	 * is successful on the "authed" order event for shipped orders (any order that has any shipped
+	 * items including mixed-type orders) or, it will fire on the "captured" order event
+	 * for non-tangible orders (downloads, donation, virtual, etc)
+	 *
+	 * Keeping this behavior behind the success markers (authed/captured) prevents email
+	 * servers from getting overloaded if the server is getting hit with bot-triggered order
+	 * attempts.
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.2
+	 *
+	 * @return void
+	 **/
+	public function success ( $Purchase ) {
+
+		$templates = array('email-order.php', 'order.php', 'order.html');
+
+		// Generic filter hook for specifying global email messages
+		$messages = apply_filters('shopp_order_success_emails', array(
+			'customer' => array(
+				"$Purchase->firstname $Purchase->lastname",									// Recipient name
+				$Purchase->email,														// Recipient email address
+				Shopp::__('Your order with %s', shopp_setting('business_name')),	// Subject
+				$templates),														// Templates
+			'merchant' => array(
+				shopp_setting('business_name'),										// Recipient name
+				shopp_setting('merchant_email'),									// Recipient email address
+				Shopp::__('New Order - %s', $Purchase->id),								// Subject
+				array_merge(array('email-merchant-order.php'), $templates))			// Templates
+		));
+
+		// Remove merchant notification if disabled in receipt copy setting
+		if ( ! shopp_setting_enabled('receipt_copy') ) unset($messages['merchant']);
+
+		foreach ( $messages as $message ) {
+			list($addressee, $email, $subject, $templates) = $message;
+
+			// Send email if the specific template is available
+			// and if an email has not already been sent to the recipient
+			$Purchase->email($addressee, $email, $subject, $templates);
+		}
+
+	}
+
+	public function email ( $addressee, $address, $subject, array $templates = array() ) {
 		global $is_IIS;
 
-		if ($template == "order.php" && file_exists(SHOPP_TEMPLATES."/order.html")) $template = SHOPP_TEMPLATES."/order.html";
-		else $template = trailingslashit(SHOPP_TEMPLATES).$template;
-		if (!file_exists($template))
-			return new ShoppError(__('A purchase notification could not be sent because the template for it does not exist.','purchase_notification_template',SHOPP_ADMIN_ERR));
+		shopp_debug("ShoppPurchase::email(): $addressee,$address,$subject,"._object_r($templates));
 
-		// Send the e-mail receipt
-		$email = array();
-		$email['from'] = '"'.wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ).'"';
-		if ($Shopp->Settings->get('merchant_email'))
-			$email['from'] .= ' <'.$Shopp->Settings->get('merchant_email').'>';
-		if($is_IIS) $email['to'] = $address;
-		else $email['to'] = '"'.html_entity_decode($addressee,ENT_QUOTES).'" <'.$address.'>';
+		// Build the e-mail message data
+		$email['from'] = Shopp::email_from( shopp_setting('merchant_email'), shopp_setting('business_name') );
+		if ($is_IIS) $email['to'] = Shopp::email_to( $address );
+		else $email['to'] = Shopp::email_to( $address, $addressee );
 		$email['subject'] = $subject;
-		$email['receipt'] = $this->receipt($receipt);
+		$email['receipt'] = $this->receipt();
 		$email['url'] = get_bloginfo('siteurl');
 		$email['sitename'] = get_bloginfo('name');
 		$email['orderid'] = $this->id;
 
-		$email = apply_filters('shopp_email_receipt_data',$email);
+		$email = apply_filters('shopp_email_receipt_data', $email);
+		$email = apply_filters('shopp_purchase_email_message', $email);
+		$this->message = array_merge($this->message,$email);
 
-		if (shopp_email($template,$email)) {
-			if (SHOPP_DEBUG) new ShoppError('A purchase notification was sent to: '.$email['to'],false,SHOPP_DEBUG_ERR);
+		// Load and process the template file
+		$defaults = array('email.php','order.php','order.html');
+		$emails = array_merge((array)$templates,$defaults);
+
+		$template = Shopp::locate_template($emails);
+
+		if ( ! file_exists($template) ) {
+			shopp_add_error(Shopp::__('A purchase notification could not be sent because the template for it does not exist.'), SHOPP_ADMIN_ERR);
+			return false;
+		}
+
+		// Send the email
+		if (Shopp::email($template, $this->message)) {
+			shopp_debug('A purchase notification was sent to: ' . $this->message['to']);
 			return true;
 		}
 
-		if (SHOPP_DEBUG) new ShoppError('A purchase notification FAILED to be sent to: '.$email['to'],false,SHOPP_DEBUG_ERR);
+		shopp_debug('A purchase notification FAILED to be sent to: ' . $this->message['to']);
 		return false;
 	}
 
-	function copydata ($Object,$prefix="") {
-		$ignores = array("_datatypes","_table","_key","_lists","id","created","modified");
-		foreach(get_object_vars($Object) as $property => $value) {
-			$property = $prefix.$property;
-			if (property_exists($this,$property) &&
-				!in_array($property,$ignores))
+	/**
+	 * Copy properties from a source object to this Purchase object
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.0
+	 *
+	 * @param Object $Object The object to copy properties from
+	 * @param string $prefix A prefix to use for matching source object properties
+	 * @param array $ignores A list of properties to ignore
+	 * @return void
+	 **/
+	public function copydata ( $Object, $prefix = '', array $ignores = array() ) {
+
+		$ignores = array_merge(array('_datatypes', '_table', '_key', '_lists', 'id', 'created', 'modified'), $ignores);
+
+		foreach( get_object_vars($Object) as $property => $value ) {
+			$property = $prefix . $property;
+			if ( property_exists($this, $property) && ! in_array($property, $ignores) )
 				$this->{$property} = $value;
 		}
 	}
 
-	function exportcolumns () {
+	public static function exportcolumns () {
 		$prefix = "o.";
 		return array(
 			$prefix.'id' => __('Order ID','Shopp'),
@@ -107,6 +634,7 @@ class Purchase extends DatabaseObject {
 			$prefix.'state' => __('Billing State/Province','Shopp'),
 			$prefix.'country' => __('Billing Country','Shopp'),
 			$prefix.'postcode' => __('Billing Postal Code','Shopp'),
+			$prefix.'shipname' => __('Shipping Name','Shopp'),
 			$prefix.'shipaddress' => __('Shipping Street Address','Shopp'),
 			$prefix.'shipxaddress' => __('Shipping Street Address 2','Shopp'),
 			$prefix.'shipcity' => __('Shipping City','Shopp'),
@@ -114,7 +642,7 @@ class Purchase extends DatabaseObject {
 			$prefix.'shipcountry' => __('Shipping Country','Shopp'),
 			$prefix.'shippostcode' => __('Shipping Postal Code','Shopp'),
 			$prefix.'shipmethod' => __('Shipping Method','Shopp'),
-			$prefix.'promos' => __('Promotions Applied','Shopp'),
+			'discounts.value' => __('Discounts Applied','Shopp'),
 			$prefix.'subtotal' => __('Order Subtotal','Shopp'),
 			$prefix.'discount' => __('Order Discount','Shopp'),
 			$prefix.'freight' => __('Order Shipping Fees','Shopp'),
@@ -128,406 +656,229 @@ class Purchase extends DatabaseObject {
 			$prefix.'data' => __('Order Data','Shopp'),
 			$prefix.'created' => __('Order Date','Shopp'),
 			$prefix.'modified' => __('Order Last Updated','Shopp')
-			);
+		);
 	}
 
 	// Display a sales receipt
-	function receipt ($template="receipt.php") {
-		if (!file_exists(SHOPP_TEMPLATES."/$template")) $template = "receipt.php";
-		if (empty($this->purchased)) $this->load_purchased();
+	public function receipt ( $template = 'receipt.php' ) {
+		if ( empty($this->purchased) ) $this->load_purchased();
+
+		if ( 'receipt.php' == $template ) { // If not overridden
+			$context = ShoppStorefront::intemplate(); // Set receipt context
+			if ( ! empty($context) )
+				$template = "receipt-$context";
+		}
+
 		ob_start();
-		include(SHOPP_TEMPLATES."/$template");
-		$content = ob_get_contents();
-		ob_end_clean();
-		return apply_filters('shopp_order_receipt',$content);
+		locate_shopp_template(array($template, 'receipt.php'), true);
+		$content = ob_get_clean();
+
+		return apply_filters('shopp_order_receipt', $content);
 	}
 
-	function tag ($property,$options=array()) {
-		global $Shopp;
+	public function save () {
+		$new = false;
+		if ( empty($this->id) ) $new = true;
 
-		$taxes = isset($options['taxes'])?$options['taxes']:false;
-		$taxrate = 0;
-		if ($property == "item-unitprice" || $property == "item-total")
-			$taxrate = shopp_taxrate($taxes);
+		if ( ! empty($this->card) )
+			$this->card = PayCard::truncate($this->card);
 
-		// Return strings with no options
-		switch ($property) {
-			case "receipt":
-				// Skip the receipt processing when sending order notifications in admin without the receipt
-				if (defined('WP_ADMIN') && isset($_POST['receipt']) && $_POST['receipt'] == "no") return;
-				if (isset($options['template']) && is_readable(SHOPP_TEMPLATES."/".$options['template']))
-					return $this->receipt($template);
-				else return $this->receipt();
-				break;
-			case "url": return shoppurl(false,'account'); break;
-			case "id": return $this->id; break;
-			case "customer": return $this->customer; break;
-			case "date":
-				if (empty($options['format'])) $options['format'] = get_option('date_format').' '.get_option('time_format');
-				return _d($options['format'],((is_int($this->created))?$this->created:mktimestamp($this->created)));
-				break;
-			case "card": return (!empty($this->card))?sprintf("%'X16d",$this->card):''; break;
-			case "cardtype": return $this->cardtype; break;
-			case "txnid":
-			case "transactionid": return $this->txnid; break;
-			case "firstname": return esc_html($this->firstname); break;
-			case "lastname": return esc_html($this->lastname); break;
-			case "company": return esc_html($this->company); break;
-			case "email": return esc_html($this->email); break;
-			case "phone": return esc_html($this->phone); break;
-			case "address": return esc_html($this->address); break;
-			case "xaddress": return esc_html($this->xaddress); break;
-			case "city": return esc_html($this->city); break;
-			case "state":
-				if (strlen($this->state > 2)) return esc_html($this->state);
-				$regions = Lookup::country_zones();
-				$states = $regions[$this->country];
-				return $states[$this->state];
-				break;
-			case "postcode": return esc_html($this->postcode); break;
-			case "country":
-				$countries = $Shopp->Settings->get('target_markets');
-				return $countries[$this->country]; break;
-			case "shipaddress": return esc_html($this->shipaddress); break;
-			case "shipxaddress": return esc_html($this->shipxaddress); break;
-			case "shipcity": return esc_html($this->shipcity); break;
-			case "shipstate":
-				if (strlen($this->shipstate > 2)) return esc_html($this->shipstate);
-				$regions = Lookup::country_zones();
-				$states = $regions[$this->country];
-				return $states[$this->shipstate];
-				break;
-			case "shippostcode": return esc_html($this->shippostcode); break;
-			case "shipcountry":
-				$countries = $Shopp->Settings->get('target_markets');
-				return $countries[$this->shipcountry]; break;
-			case "shipmethod": return esc_html($this->shipmethod); break;
-			case "totalitems": return count($this->purchased); break;
-			case "has-items":
-			case "hasitems":
-				if (empty($this->purchased)) $this->load_purchased();
-				return (count($this->purchased) > 0);
-				break;
-			case "items":
-				if (!isset($this->_items_loop)) {
-					reset($this->purchased);
-					$this->_items_loop = true;
-				} else next($this->purchased);
+		parent::save();
+	}
 
-				if (current($this->purchased) !== false) return true;
-				else {
-					unset($this->_items_loop);
-					return false;
-				}
-			case "item-id":
-				$item = current($this->purchased);
-				return $item->id; break;
-			case "item-product":
-				$item = current($this->purchased);
-				return $item->product; break;
-			case "item-price":
-				$item = current($this->purchased);
-				return $item->price; break;
-			case "item-name":
-				$item = current($this->purchased);
-				return $item->name; break;
-			case "item-description":
-				$item = current($this->purchased);
-				return $item->description; break;
-			case "item-options":
-				if (!isset($options['after'])) $options['after'] = "";
-				$item = current($this->purchased);
-				return (!empty($item->optionlabel))?$options['before'].$item->optionlabel.$options['after']:''; break;
-			case "item-sku":
-				$item = current($this->purchased);
-				return $item->sku; break;
-			case "item-download":
-				$item = current($this->purchased);
-				if (empty($item->download)) return "";
-				if (!isset($options['label'])) $options['label'] = __('Download','Shopp');
-				$classes = "";
-				if (isset($options['class'])) $classes = ' class="'.$options['class'].'"';
-				$request = SHOPP_PRETTYURLS?
-					"download/$item->dkey":
-					array('src'=>'download','shopp_download'=>$item->dkey);
-				$url = shoppurl($request,'catalog');
-				return '<a href="'.$url.'"'.$classes.'>'.$options['label'].'</a>'; break;
-			case "item-quantity":
-				$item = current($this->purchased);
-				return $item->quantity; break;
-			case "item-unitprice":
-				$item = current($this->purchased);
-				$amount = $item->unitprice+($this->taxing == 'inclusive'?$item->unittax:0);
-				return money($amount); break;
-			case "item-total":
-				$item = current($this->purchased);
-				$amount = $item->total+($this->taxing == 'inclusive'?$item->unittax*$item->quantity:0);
-				return money($amount); break;
-			case "item-has-inputs":
-			case "item-hasinputs":
-				$item = current($this->purchased);
-				return (count($item->data) > 0); break;
-			case "item-inputs":
-				$item = current($this->purchased);
-				if (!isset($this->_iteminputs_loop)) {
-					reset($item->data);
-					$this->_iteminputs_loop = true;
-				} else next($item->data);
+	public function delete () {
+		$table = ShoppDatabaseObject::tablename(ShoppMetaObject::$table);
+		sDB::query("DELETE LOW_PRIORITY FROM $table WHERE parent='$this->id' AND context='purchase'");
+		parent::delete();
+	}
 
-				if (current($item->data) !== false) return true;
-				else {
-					unset($this->_iteminputs_loop);
-					return false;
-				}
-				break;
-			case "item-input":
-				$item = current($this->purchased);
-				$data = current($item->data);
-				$name = key($item->data);
-				if (isset($options['name'])) return esc_html($name);
-				return esc_html($data);
-				break;
-			case "item-inputs-list":
-			case "item-inputslist":
-			case "item-inputs-list":
-			case "iteminputslist":
-				$item = current($this->purchased);
-				if (empty($item->data)) return false;
-				$before = ""; $after = ""; $classes = ""; $excludes = array();
-				if (!empty($options['class'])) $classes = ' class="'.$options['class'].'"';
-				if (!empty($options['exclude'])) $excludes = explode(",",$options['exclude']);
-				if (!empty($options['before'])) $before = $options['before'];
-				if (!empty($options['after'])) $after = $options['after'];
-
-				$result .= $before.'<ul'.$classes.'>';
-				foreach ($item->data as $name => $data) {
-					if (in_array($name,$excludes)) continue;
-					$result .= '<li><strong>'.esc_html($name).'</strong>: '.esc_html($data).'</li>';
-				}
-				$result .= '</ul>'.$after;
-				return $result;
-				break;
-			case "item-has-addons":
-			case "item-hasaddons":
-				$item = current($this->purchased);
-				return (count($item->addons) > 0); break;
-			case "item-addons":
-				$item = current($this->purchased);
-				if (!isset($this->_itemaddons_loop)) {
-					reset($item->addons->meta);
-					$this->_itemaddons_loop = true;
-				} else next($item->addons->meta);
-
-				if (current($item->addons->meta) !== false) return true;
-				else {
-					unset($this->_itemaddons_loop);
-					return false;
-				}
-				break;
-			case "item-addons":
-				$item = current($this->purchased);
-				$addon = current($item->addons->meta);
-				if (isset($options['id'])) return esc_html($addon->id);
-				if (isset($options['name'])) return esc_html($addon->name);
-				if (isset($options['label'])) return esc_html($addon->name);
-				if (isset($options['type'])) return esc_html($addon->value->type);
-				if (isset($options['onsale'])) return $addon->value->onsale;
-				if (isset($options['inventory'])) return $addon->value->inventory;
-				if (isset($options['sku'])) return esc_html($addon->value->sku);
-				if (isset($options['unitprice'])) return money($addon->value->unitprice);
-				return money($addon->value->unitprice);
-				break;
-			case "item-addons-list":
-			case "item-addonslist":
-			case "item-addons-list":
-			case "itemaddonslist":
-				$item = current($this->purchased);
-				if (empty($item->addons)) return false;
-				$defaults = array(
-					'prices' => "on",
-					'download' => __('Download','Shopp'),
-					'before' => '',
-					'after' => '',
-					'classes' => '',
-					'excludes' => ''
-				);
-				$options = array_merge($defaults,$options);
-				extract($options);
-
-				$class = !empty($classes)?' class="'.join(' ',explode(',',$classes)).'"':'';
-				$taxrate = 0;
-				if ($item->unitprice > 0)
-					$taxrate = round($item->unittax/$item->unitprice,4);
-
-				$result = $before.'<ul'.$class.'>';
-				foreach ($item->addons->meta as $id => $addon) {
-					if (in_array($addon->name,$excludes)) continue;
-					if ($this->taxing == "inclusive")
-						$price = $addon->value->unitprice+($addon->value->unitprice*$taxrate);
-					else $price = $addon->value->unitprice;
-
-					$link = false;
-					if (isset($addon->value->download) && isset($addon->value->dkey)) {
-						$dkey = $addon->value->dkey;
-						$request = SHOPP_PRETTYURLS?"download/$dkey":array('shopp_download'=>$dkey);
-						$url = shoppurl($request,'catalog');
-						$link = '<br /><a href="'.$url.'">'.$download.'</a>';
-					}
-
-					$pricing = value_is_true($prices)?" (".money($price).")":"";
-					$result .= '<li>'.esc_html($addon->name.$pricing).$link.'</li>';
-				}
-				$result .= '</ul>'.$after;
-				return $result;
-				break;
-			case "has-data":
-			case "hasdata": return (is_array($this->data) && count($this->data) > 0); break;
-			case "orderdata":
-				if (!isset($this->_data_loop)) {
-					reset($this->data);
-					$this->_data_loop = true;
-				} else next($this->data);
-
-				if (current($this->data) !== false) return true;
-				else {
-					unset($this->_data_loop);
-					return false;
-				}
-				break;
-			case "data":
-				if (!is_array($this->data)) return false;
-				$data = current($this->data);
-				$name = key($this->data);
-				if (isset($options['name'])) return esc_html($name);
-				return esc_html($data);
-				break;
-			case "promolist":
-			case "promo-list":
-				$output = "";
-				if (!empty($this->promos)) {
-					$output .= '<ul>';
-					foreach ($this->promos as $promo)
-						$output .= '<li>'.$promo.'</li>';
-					$output .= '</ul>';
-				}
-				return $output;
-			case "has-promo":
-			case "haspromo":
-				if (empty($options['name'])) return false;
-				return (in_array($options['name'],$this->promos));
-				break;
-			case "subtotal": return money($this->subtotal); break;
-			case "hasfreight": return (!empty($this->shipmethod) || $this->freight > 0);
-			case "freight": return money($this->freight); break;
-			case "hasdownloads": return ($this->downloads);
-			case "hasdiscount": return ($this->discount > 0);
-			case "discount": return money($this->discount); break;
-			case "hastax": return ($this->tax > 0)?true:false;
-			case "tax": return money($this->tax); break;
-			case "total": return money($this->total); break;
-			case "status":
-				$labels = $Shopp->Settings->get('order_status');
-				if (empty($labels)) $labels = array('');
-				return $labels[$this->status];
-				break;
-			case "paid": return ($this->txnstatus == "CHARGED"); break;
-			case "notpaid": return ($this->txnstatus != "CHARGED"); break;
-			case "payment":
-				$labels = Lookup::payment_status_labels();
-				return isset($labels[$this->txnstatus])?$labels[$this->txnstatus]:$this->txnstatus; break;
+	public function delete_purchased () {
+		if ( empty($this->purchased) ) $this->load_purchased();
+		foreach ( $this->purchased as $item ) {
+			$Purchased = new ShoppPurchased();
+			$Purchased->populate($item);
+			$Purchased->delete();
 		}
 	}
+
+	public function lock () {
+		if ( empty($this->id) ) return false;
+
+ 		$locked = 0;
+ 		for ( $attempts = 0; $attempts < 3 && $locked == 0; $attempts++ ) {
+ 			$locked = sDB::query("SELECT GET_LOCK('$this->id'," . SHOPP_TXNLOCK_TIMEOUT . ") AS locked", 'auto', 'col', 'locked');
+			if ( 0 == $locked ) sleep(1); // Wait a sec before trying again
+ 		}
+
+ 		if ( 1 == $locked ) return true;
+
+		shopp_debug("Purchase lock for order #$this->id failed. Could not achieve a lock.");
+		return false;
+ 	}
+
+ 	/**
+ 	 * Unlocks a transaction lock
+ 	 *
+ 	 * @author Jonathan Davis
+ 	 * @since 1.2.1
+ 	 *
+ 	 * @return boolean
+ 	 **/
+	public function unlock () {
+		if ( empty($this->id) ) return false;
+ 		$unlocked = sDB::query("SELECT RELEASE_LOCK('$this->id') as unlocked", 'auto', 'col', 'unlocked');
+ 		return ( 1 == $unlocked );
+ 	}
 
 } // end Purchase class
 
+class PurchaseStockAllocation extends AutoObjectFramework {
+
+	public $purchased = 0; // purchased id
+	public $addon = false;	// index of addons
+	public $sku = '';		// sku
+	public $price = 0; 	// price id
+	public $quantity = 0;	// quantity
+
+}
+
 class PurchasesExport {
-	var $sitename = "";
-	var $headings = false;
-	var $data = false;
-	var $defined = array();
-	var $purchase_cols = array();
-	var $purchased_cols = array();
-	var $selected = array();
-	var $recordstart = true;
-	var $content_type = "text/plain";
-	var $extension = "txt";
-	var $date_format = 'F j, Y';
-	var $time_format = 'g:i:s a';
-	var $set = 0;
-	var $limit = 1024;
 
-	function PurchasesExport () {
-		global $Shopp;
+	public $sitename = "";
+	public $headings = false;
+	public $data = false;
+	public $defined = array();
+	public $purchase_cols = array();
+	public $purchased_cols = array();
+	public $selected = array();
+	public $recordstart = true;
+	public $content_type = "text/plain";
+	public $extension = "txt";
+	public $date_format = 'F j, Y';
+	public $time_format = 'g:i:s a';
+	public $set = 0;
+	public $limit = 1024;
 
-		$this->purchase_cols = Purchase::exportcolumns();
-		$this->purchased_cols = Purchased::exportcolumns();
+	public function __construct () {
+
+		$this->purchase_cols = ShoppPurchase::exportcolumns();
+		$this->purchased_cols = ShoppPurchased::exportcolumns();
 		$this->defined = array_merge($this->purchase_cols,$this->purchased_cols);
 
 		$this->sitename = get_bloginfo('name');
-		$this->headings = ($Shopp->Settings->get('purchaselog_headers') == "on");
-		$this->selected = $Shopp->Settings->get('purchaselog_columns');
+		$this->headings = (shopp_setting('purchaselog_headers') == "on");
+		$this->selected = shopp_setting('purchaselog_columns');
 		$this->date_format = get_option('date_format');
 		$this->time_format = get_option('time_format');
-		$Shopp->Settings->save('purchaselog_lastexport',mktime());
+		shopp_set_setting('purchaselog_lastexport',current_time('timestamp'));
 	}
 
-	function query ($request=array()) {
-		$db =& DB::get();
-		if (empty($request)) $request = $_GET;
+	public function query ( $request = array() ) {
+		$defaults = array(
+			'status' => false,
+			's' => false,
+			'start' => false,
+			'end' => false
+		);
+		$request = array_merge($defaults, $_GET);
+		extract($request);
 
-		if (!empty($request['start'])) {
-			list($month,$day,$year) = explode("/",$request['start']);
-			$starts = mktime(0,0,0,$month,$day,$year);
+
+		if ( ! empty($start) ) {
+			list($month, $day, $year) = explode('/', $start);
+			$start = mktime(0, 0, 0, $month, $day, $year);
 		}
 
-		if (!empty($request['end'])) {
-			list($month,$day,$year) = explode("/",$request['end']);
-			$ends = mktime(0,0,0,$month,$day,$year);
+		if ( ! empty($end) ) {
+			list($month, $day, $year) = explode('/', $end);
+			$end = mktime(23, 59, 59, $month, $day, $year);
 		}
 
-		$where = "WHERE o.id IS NOT NULL AND p.id IS NOT NULL ";
-		if (isset($request['status']) && !empty($request['status'])) $where .= "AND status='{$request['status']}'";
-		if (isset($request['s']) && !empty($request['s'])) $where .= " AND (id='{$request['s']}' OR firstname LIKE '%{$request['s']}%' OR lastname LIKE '%{$request['s']}%' OR CONCAT(firstname,' ',lastname) LIKE '%{$request['s']}%' OR transactionid LIKE '%{$request['s']}%')";
-		if (!empty($request['start']) && !empty($request['end'])) $where .= " AND  (UNIX_TIMESTAMP(o.created) >= $starts AND UNIX_TIMESTAMP(o.created) <= $ends)";
+		$where = array();
+		$joins = array();
+		if ( ! empty($status) || $status === '0' ) $where[] = "status='" . sDB::escape($status) . "'";
+		if ( ! empty($s) ) {
+			$s = stripslashes($s);
+			$search = array();
+			if ( preg_match_all('/(\w+?)\:(?="(.+?)"|(.+?)\b)/', $s, $props, PREG_SET_ORDER) > 0 ) {
+				foreach ( $props as $query ) {
+					$keyword = sDB::escape( ! empty($query[2]) ? $query[2] : $query[3] );
+					switch(strtolower($query[1])) {
+						case "txn": 		$search[] = "txnid='$keyword'"; break;
+						case "company":		$search[] = "company LIKE '%$keyword%'"; break;
+						case "gateway":		$search[] = "gateway LIKE '%$keyword%'"; break;
+						case "cardtype":	$search[] = "cardtype LIKE '%$keyword%'"; break;
+						case "address": 	$search[] = "(address LIKE '%$keyword%' OR xaddress='%$keyword%')"; break;
+						case "city": 		$search[] = "city LIKE '%$keyword%'"; break;
+						case "province":
+						case "state": 		$search[] = "state='$keyword'"; break;
+						case "zip":
+						case "zipcode":
+						case "postcode":	$search[] = "postcode='$keyword'"; break;
+						case "country": 	$search[] = "country='$keyword'"; break;
+						case "promo":
+						case "discount":
+											$meta_table = ShoppDatabaseObject::tablename(ShoppMetaObject::$table);
+											$joins[ $meta_table ] = "INNER JOIN $meta_table AS discounts ON discounts.parent = o.id";
+											$search[] = "discounts.value LIKE '%$keyword%' AND discounts.context='purchase' AND discounts.name='discounts'"; break;
+					}
+				}
+				if ( empty($search) ) $search[] = "(o.id='$s' OR CONCAT(firstname,' ',lastname) LIKE '%$s%')";
+				$where[] = "(".join(' OR ',$search).")";
+			} elseif ( strpos($s,'@') !== false ) {
+				 $where[] = "email='".sDB::escape($s)."'";
+			} else $where[] = "(o.id='$s' OR CONCAT(firstname,' ',lastname) LIKE '%".sDB::escape($s)."%')";
+		}
+		if ( ! empty($start) && !empty($end) ) $where[] = '(UNIX_TIMESTAMP(o.created) >= '.$start.' AND UNIX_TIMESTAMP(o.created) <= '.$end.')';
+		if ( ! empty($customer) ) $where[] = "customer=".intval($customer);
+		$where = ! empty($where) ? "WHERE ".join(' AND ', $where) : '';
 
-		$purchasetable = DatabaseObject::tablename(Purchase::$table);
-		$purchasedtable = DatabaseObject::tablename(Purchased::$table);
-		$offset = ($this->set*$this->limit);
+		$purchasetable = ShoppDatabaseObject::tablename(ShoppPurchase::$table);
+		$purchasedtable = ShoppDatabaseObject::tablename(ShoppPurchased::$table);
+		$offset = ($this->set * $this->limit);
 
-		$c = 0; $columns = array();
-		foreach ($this->selected as $column) $columns[] = "$column AS col".$c++;
-		$query = "SELECT ".join(",",$columns)." FROM $purchasedtable AS p LEFT JOIN $purchasetable AS o ON o.id=p.purchase $where ORDER BY o.created ASC LIMIT $offset,$this->limit";
-		$this->data = $db->query($query,AS_ARRAY);
+		$c = 0; $columns = array(); $purchasedcols = false;
+		foreach ( $this->selected as $column ) {
+			$columns[] = "$column AS col".$c++;
+			if ( false !== strpos($column, 'p.') ) $purchasedcols = true;
+		}
+		if ( $purchasedcols ) $FROM = "FROM $purchasedtable AS p INNER JOIN $purchasetable AS o ON o.id=p.purchase";
+		else $FROM = "FROM $purchasetable AS o";
+
+		$joins = join(' ', $joins);
+
+		$query = "SELECT ".join(",",$columns)." $FROM $joins $where ORDER BY o.created ASC LIMIT $offset,$this->limit";
+		$this->data = sDB::query($query, 'array');
 	}
 
 	// Implement for exporting all the data
-	function output () {
-		if (!$this->data) $this->query();
-		if (!$this->data) return false;
+	public function output () {
+		if ( ! $this->data ) $this->query();
+		if ( ! $this->data ) Shopp::redirect( add_query_arg( array_merge($_GET,array('src' => null) ), admin_url('admin.php') ) );
 
 		header("Content-type: $this->content_type; charset=UTF-8");
 		header("Content-Disposition: attachment; filename=\"$this->sitename Purchase Log.$this->extension\"");
-		header("Content-Description: Delivered by WordPress/Shopp ".SHOPP_VERSION);
+		header("Content-Description: Delivered by " . ShoppVersion::agent());
 		header("Cache-Control: maxage=1");
 		header("Pragma: public");
 
 		$this->begin();
-		if ($this->headings) $this->heading();
+		if ( $this->headings ) $this->heading();
 		$this->records();
 		$this->end();
 	}
 
-	function begin() {}
+	public function begin() {}
 
-	function heading () {
+	public function heading () {
 		foreach ($this->selected as $name)
 			$this->export($this->defined[$name]);
 		$this->record();
 	}
 
-	function records () {
+	public function records () {
 		while (!empty($this->data)) {
-			foreach ($this->data as $key => $record) {
+			foreach ($this->data as $record) {
 				foreach(get_object_vars($record) as $column)
 					$this->export($this->parse($column));
 				$this->record();
@@ -537,75 +888,101 @@ class PurchasesExport {
 		}
 	}
 
-	function parse ($column) {
-		if (preg_match("/^[sibNaO](?:\:.+?\{.*\}$|\:.+;$|;$)/",$column)) {
+	public function parse ( $column ) {
+		if ( sdb::serialized($column) ) {
 			$list = unserialize($column);
 			$column = "";
-			foreach ($list as $name => $value)
-				$column .= (empty($column)?"":";")."$name:$value";
+			foreach ( $list as $name => $value ) {
+				if ( is_a($value, 'ShoppPurchaseDiscount') ) {
+					$Discount = $value;
+					$column .= ( empty($column) ? "" : ";" ) . trim("$Discount->id:$Discount->name (" . money($Discount->discount) . ") $Discount->code");
+				} else $column .= ( empty($column) ? "" : ";" ) . "$name:$value";
+			}
 		}
-		return $column;
+		return $this->escape($column);
 	}
 
-	function end() {}
+	public function end() {}
 
 	// Implement for exporting a single value
-	function export ($value) {
+	public function export ( $value ) {
 		echo ($this->recordstart?"":"\t").$value;
 		$this->recordstart = false;
 	}
 
-	function record () {
+	public function record () {
 		echo "\n";
 		$this->recordstart = true;
 	}
 
-	function settings () {}
+	public static function settings () {
+		/** Placeholder **/
+	}
+
+	public function escape ($value) {
+		return $value;
+	}
 
 }
 
 class PurchasesTabExport extends PurchasesExport {
-	function PurchasesTabExport () {
-		parent::PurchasesExport();
+
+	public function __construct () {
+		parent::__construct();
 		$this->output();
 	}
+
+	public function escape ($value) {
+		$value = str_replace(array("\n", "\r"), ' ', $value); // No newlines
+		if ( false !== strpos($value, "\t") && false === strpos($value,'"') )	// Quote tabs
+			$value = '"' . $value . '"';
+		return $value;
+	}
+
 }
 
 class PurchasesCSVExport extends PurchasesExport {
-	function PurchasesCSVExport () {
-		parent::PurchasesExport();
+
+	public function __construct () {
+		parent::__construct();
 		$this->content_type = "text/csv";
 		$this->extension = "csv";
 		$this->output();
 	}
 
-	function export ($value) {
-		$value = str_replace('"','""',$value);
-		if (preg_match('/^\s|[,"\n\r]|\s$/',$value)) $value = '"'.$value.'"';
+	public function export ($value) {
 		echo ($this->recordstart?"":",").$value;
 		$this->recordstart = false;
+	}
+
+	public function escape ($value) {
+		$value = str_replace('"','""',$value);
+		if ( preg_match('/^\s|[,"\n\r]|\s$/',$value) )
+			$value = '"'.$value.'"';
+		return $value;
 	}
 
 }
 
 class PurchasesXLSExport extends PurchasesExport {
-	function PurchasesXLSExport () {
-		parent::PurchasesExport();
+
+	public function __construct () {
+		parent::__construct();
 		$this->content_type = "application/vnd.ms-excel";
 		$this->extension = "xls";
 		$this->c = 0; $this->r = 0;
 		$this->output();
 	}
 
-	function begin () {
+	public function begin () {
 		echo pack("ssssss", 0x809, 0x8, 0x0, 0x10, 0x0, 0x0);
 	}
 
-	function end () {
+	public function end () {
 		echo pack("ss", 0x0A, 0x00);
 	}
 
-	function export ($value) {
+	public function export ($value) {
 		if (preg_match('/^[\d\.]+$/',$value)) {
 		 	echo pack("sssss", 0x203, 14, $this->r, $this->c, 0x0);
 			echo pack("d", $value);
@@ -617,19 +994,19 @@ class PurchasesXLSExport extends PurchasesExport {
 		$this->c++;
 	}
 
-	function record () {
+	public function record () {
 		$this->c = 0;
 		$this->r++;
 	}
 }
 
 class PurchasesIIFExport extends PurchasesExport {
-	function PurchasesIIFExport () {
-		global $Shopp;
-		parent::PurchasesExport();
+
+	public function __construct () {
+		parent::__construct();
 		$this->content_type = "application/qbooks";
 		$this->extension = "iif";
-		$account = $Shopp->Settings->get('purchaselog_iifaccount');
+		$account = shopp_setting('purchaselog_iifaccount');
 		if (empty($account)) $account = "Merchant Account";
 		$this->selected = array(
 			"'\nTRNS'",
@@ -655,27 +1032,24 @@ class PurchasesIIFExport extends PurchasesExport {
 		$this->output();
 	}
 
-	function begin () {
+	public function begin () {
 		echo "!TRNS\tDATE\tACCNT\tNAME\tCLASS\tAMOUNT\tMEMO\n!SPL\tDATE\tACCNT\tNAME\tAMOUNT\tMEMO\n!ENDTRNS";
 	}
 
-	function export ($value) {
+	public function export ($value) {
 		echo (substr($value,0,1) != "\n")?"\t".$value:$value;
 	}
 
-	function record () { }
+	public function record () { }
 
-	function settings () {
-		global $Shopp;
-		?>
+	public static function settings () { ?>
 		<div id="iif-settings" class="hidden">
-			<input type="text" id="iif-account" name="settings[purchaselog_iifaccount]" value="<?php echo $Shopp->Settings->get('purchaselog_iifaccount'); ?>" size="30"/><br />
+			<input type="text" id="iif-account" name="settings[purchaselog_iifaccount]" value="<?php echo shopp_setting('purchaselog_iifaccount'); ?>" size="30"/><br />
 			<label for="iif-account"><small><?php _e('QuickBooks account name for transactions','Shopp'); ?></small></label>
 		</div>
 		<script type="text/javascript">
 		/* <![CDATA[ */
-		jQuery(document).ready( function() {
-			var $=jqnc();
+		jQuery(document).ready( function($) {
 			$('#purchaselog-format').change(function () {
 				if ($(this).val() == "iif") {
 					$('#export-columns').hide();
@@ -693,5 +1067,14 @@ class PurchasesIIFExport extends PurchasesExport {
 	}
 }
 
+// Attach the notification system to order events
+add_action('shopp_order_event', array('ShoppPurchase', 'notifications'));
+add_action('shopp_order_notifications', array('ShoppPurchase', 'success'));
 
-?>
+// Automatically update the orders from order events
+$updates = array('invoiced', 'authed', 'captured', 'shipped', 'refunded', 'voided');
+foreach ( $updates as $event ) // Scheduled before default actions so updates are reflected in later actions
+	add_action( 'shopp_' . $event . '_order_event', array('ShoppPurchase', 'event'), 5 );
+
+// Handle unstock event
+add_action('shopp_unstock_order_event', array('ShoppPurchase', 'unstock'));

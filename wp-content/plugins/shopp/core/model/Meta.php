@@ -12,19 +12,21 @@
  * @subpackage meta
  **/
 
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
+
 /**
- * MetaObject
+ * ShoppMetaObject
  *
  * @author Jonathan Davis
  * @since 1.1
  * @package shopp
  * @subpackage meta
  **/
-class MetaObject extends DatabaseObject {
-	static $table = "meta";
+class ShoppMetaObject extends ShoppDatabaseObject {
+	static $table = 'meta';
 
-	var $context = 'product';
-	var $type = 'meta';
+	public $context = 'product';
+	public $type = 'meta';
 
 	/**
 	 * Meta constructor
@@ -35,7 +37,45 @@ class MetaObject extends DatabaseObject {
 	 **/
 	function __construct ($id=false,$key='id') {
 		$this->init(self::$table);
-		$this->load($id,$key);
+		if (!$id) return;
+		if (is_array($id)) $this->load($id);
+		else $this->load(array($key=>$id,'type'=>$this->type));
+
+		if (!empty($this->id) && !empty($this->_xcols))
+			$this->expopulate();
+	}
+
+	/**
+	 * Populate extended fields loaded from the ShoppMetaObject
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.1
+	 *
+	 * @return void
+	 **/
+	function expopulate () {
+		if (!is_object($this->value)) return;
+		$properties = $this->value;
+		$this->copydata($properties);
+		unset($this->value);
+	}
+
+	/**
+	 * Save the object back to the database
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.1
+	 *
+	 * @return void
+	 **/
+	function save () {
+		if (!empty($this->_xcols)) {
+			$value = new stdClass();
+			foreach ((array)$this->_xcols as $col)
+				$value->{$col} = $this->{$col};
+			$this->value = $value;
+		}
+		parent::save();
 	}
 
 } // END class Meta
@@ -50,44 +90,43 @@ class MetaObject extends DatabaseObject {
  * @package shopp
  * @subpackage meta
  **/
-abstract class MetasetObject extends DatabaseObject {
-	static $table = "meta";
+abstract class MetasetObject extends ShoppDatabaseObject {
+	static $table = 'meta';
 
-	var $_table = false;	// Fully qualified table name
-	var $_loaded = false;	// If he record is successfully loaded
-	var $_meta = array();	// The meta record definitions
-	var $_context = 'meta';	// The meta context
-	var $_parent = 0;		// Linking reference to the root record
-	var $_type = false;		// Type (class) of object
+	public $_table = false;	// Fully qualified table name
+	public $_loaded = false;	// If the record is successfully loaded
+	public $_meta = array();	// The meta record definitions
+	public $_context = 'meta';	// The meta context
+	public $_parent = 0;		// Linking reference to the root record
+	public $_type = false;		// Type (class) of object
 
-	var $id = false;		// The root record for the set
+	public $id = false;		// The root record for the set
 
 	function __construct ($id=false,$key='id') {
 		$this->init(self::$table);
 		$this->load($id,$key);
 	}
 
-	function init () {
-		$this->_table = DatabaseObject::tablename(MetasetObject::$table);
+	function init ($table,$key='id') {
+		$this->_table = ShoppDatabaseObject::tablename(MetasetObject::$table);
 		$this->_type = get_class($this);
 		$properties = array_keys(get_object_vars($this));
 		$this->_properties = array_filter($properties,array('MetasetObject','_ignore_'));
 	}
 
 	function load () {
-		$db = &DB::get();
 
 		$args = func_get_args();
 		if (empty($args[0])) return false;
 		if (is_array($args[0])) {
 			foreach ($args[0] as $key => $id)
-				$where .= ($where == ""?"":" AND ")."$key='".$db->escape($id)."'";
+				$where .= ($where == ""?"":" AND ")."$key='".sDB::escape($id)."'";
 		} else $where = "{$args[1]}='{$args[0]}' OR (parent={$args[0]} AND context='meta')";
 
-		$r = $db->query("SELECT * FROM $this->_table WHERE $where",AS_ARRAY);
+		$r = sDB::query("SELECT * FROM $this->_table WHERE $where",'array');
 
 		foreach ($r as $row) {
-			$meta = new MetaObject();
+			$meta = new ShoppMetaObject();
 			$meta->populate($row,'',array());
 			$this->_meta[$meta->name] = $meta;
 
@@ -110,13 +149,12 @@ abstract class MetasetObject extends DatabaseObject {
 	 * @author Jonathan Davis
 	 * @since 1.1
 	 *
-	 * @return void Description...
+	 * @return void
 	 **/
-	function save () {
-		$db = &DB::get();
+	function save ($op='update') {
 
 		if (empty($this->id)) {
-			$meta = new MetaObject();
+			$meta = new ShoppMetaObject();
 			$meta->parent = 0;
 			$meta->context = $this->_context;
 			$meta->type = $this->_type;
@@ -131,7 +169,7 @@ abstract class MetasetObject extends DatabaseObject {
 		foreach(get_object_vars($this) as $property => $value) {
 			if ($property[0] == "_") continue; // Skip mapping properties
 			if (!isset($this->_meta[$property])) {
-				$meta = new MetaObject();
+				$meta = new ShoppMetaObject();
 				$meta->parent = $this->_parent;
 				$meta->context = $this->_context;
 				$meta->type = $this->_type;
@@ -153,10 +191,9 @@ abstract class MetasetObject extends DatabaseObject {
 	 * @return boolean
 	 **/
 	function delete () {
-		$db = &DB::get();
 		// Delete records
-		if (!empty($this->id) && !empty($this->_parent))
-			return $db->query("DELETE FROM $this->_table WHERE (id='$this->_parent' AND parent=0 AND context='$this->_meta') OR (parent='$this->_parent' AND context='$this->_meta')");
+		if ( ! empty($this->id) && ! empty($this->_parent) )
+			return sDB::query("DELETE FROM $this->_table WHERE (id='$this->_parent' AND parent=0 AND context='$this->_meta') OR (parent='$this->_parent' AND context='$this->_meta')");
 		else return false;
 	}
 
@@ -179,12 +216,12 @@ abstract class MetasetObject extends DatabaseObject {
 class ObjectMeta {
 	static $table = "meta";
 
-	var $_loaded = false;
-	var $meta = array();
-	var $named = array();
+	public $_loaded = false;
+	public $meta = array();
+	public $named = array();
 
 	function __construct ($parent=false,$context='product',$type=false,$sort='sortorder') {
-		$this->_table = DatabaseObject::tablename(self::$table);
+		$this->_table = ShoppDatabaseObject::tablename(self::$table);
 
 		$params = array(
 			'parent' => $parent,
@@ -196,7 +233,6 @@ class ObjectMeta {
 	}
 
 	function load () {
-		$db = &DB::get();
 
 		$args = func_get_args();
 		if (empty($args[0])) return false;
@@ -204,12 +240,12 @@ class ObjectMeta {
 
 		$where = "";
 		foreach ($args[0] as $key => $id)
-			$where .= ($where == ""?"":" AND ")."$key='".$db->escape($id)."'";
+			$where .= ($where == ""?"":" AND ")."$key='".sDB::escape($id)."'";
 
-		$r = $db->query("SELECT * FROM $this->_table WHERE $where",AS_ARRAY);
+		$r = sDB::query("SELECT * FROM $this->_table WHERE $where",'array');
 
 		foreach ($r as $row) {
-			$meta = new MetaObject();
+			$meta = new ShoppMetaObject();
 			$meta->populate($row,'',array());
 
 			$this->meta[$meta->id] = $meta;
@@ -228,5 +264,3 @@ class ObjectMeta {
 	}
 
 }
-
-?>

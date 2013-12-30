@@ -9,42 +9,41 @@
  * @package shopp
  **/
 
-if (class_exists('WP_Widget')) {
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
 
-class ShoppTagCloudWidget extends WP_Widget {
+if ( class_exists('WP_Widget') && ! class_exists('ShoppTagCloudWidget') ) {
 
-    function ShoppTagCloudWidget() {
-        parent::WP_Widget(false,
-			$name = __('Shopp Tag Cloud','Shopp'),
-			array('description' => __('Popular product tags in a cloud format','Shopp'))
-		);
-    }
+	class ShoppTagCloudWidget extends WP_Widget {
 
-    function widget($args, $options) {
-		global $Shopp;
-		if (!empty($args)) extract($args);
+	    function __construct() {
+	        parent::__construct(false,
+				$name = __('Shopp Tag Cloud','Shopp'),
+				array('description' => __('Popular product tags in a cloud format','Shopp'))
+			);
+	    }
 
-		if (empty($options['title'])) $options['title'] = "Product Tags";
-		$title = $before_title.$options['title'].$after_title;
+	    function widget($args, $options) {
+			$Shopp = Shopp::object();
+			if (!empty($args)) extract($args);
 
-		$tagcloud = $Shopp->Catalog->tag('tagcloud',$options);
-		echo $before_widget.$title.$tagcloud.$after_widget;
-    }
+			if (empty($options['title'])) $options['title'] = "Product Tags";
+			$title = $before_title.$options['title'].$after_title;
 
-    function update($new_instance, $old_instance) {
-        return $new_instance;
-    }
+			$tagcloud = shopp('catalog','get-tagcloud',$options);
+			echo $before_widget.$title.$tagcloud.$after_widget;
+	    }
 
-    function form($options) {
-		?>
-		<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label>
-		<input type="text" name="<?php echo $this->get_field_name('title'); ?>" id="<?php echo $this->get_field_id('title'); ?>" class="widefat" value="<?php echo $options['title']; ?>"></p>
-		<?php
-    }
+	    function update($new_instance, $old_instance) {
+	        return $new_instance;
+	    }
 
-} // class ShoppTagCloudWidget
+	    function form($options) {
+			?>
+			<p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label>
+			<input type="text" name="<?php echo $this->get_field_name('title'); ?>" id="<?php echo $this->get_field_id('title'); ?>" class="widefat" value="<?php echo $options['title']; ?>"></p>
+			<?php
+	    }
 
-register_widget('ShoppTagCloudWidget');
+	} // class ShoppTagCloudWidget
 
 }
-?>

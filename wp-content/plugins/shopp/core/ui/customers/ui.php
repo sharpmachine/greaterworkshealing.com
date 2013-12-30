@@ -2,8 +2,10 @@
 function save_meta_box ($Customer) {
 ?>
 <div id="misc-publishing-actions">
-<p><strong><a href="<?php echo esc_url(add_query_arg(array('page'=>'shopp-orders','customer'=>$Customer->id),admin_url('admin.php'))); ?>"><?php _e('Orders','Shopp'); ?></a>: </strong><?php echo $Customer->orders; ?> &mdash; <strong><?php echo money($Customer->total); ?></strong></p>
+<?php if ($Customer->id > 0): ?>
+<p><strong><a href="<?php echo esc_url(add_query_arg(array('page'=>'shopp-orders','customer'=>$Customer->id),admin_url('admin.php'))); ?>"><?php _e('Orders','Shopp'); ?></a>: </strong><?php echo $Customer->orders; ?> &mdash; <strong><?php echo Shopp::money($Customer->total); ?></strong></p>
 <p><strong><a href="<?php echo esc_url( add_query_arg(array('page'=>'shopp-customers','range'=>'custom','start'=>date('n/j/Y',$Customer->created),'end'=>date('n/j/Y',$Customer->created)),admin_url('admin.php'))); ?>"><?php _e('Joined','Shopp'); ?></a>: </strong><?php echo date(get_option('date_format'),$Customer->created); ?></p>
+<?php endif; ?>
 <?php do_action('shopp_customer_editor_info',$Customer); ?>
 </div>
 <div id="major-publishing-actions">
@@ -11,7 +13,7 @@ function save_meta_box ($Customer) {
 </div>
 <?php
 }
-add_meta_box('save-customer', __('Save','Shopp').$Admin->boxhelp('customer-editor-save'), 'save_meta_box', 'shopp_page_shopp-customers', 'side', 'core');
+ShoppUI::addmetabox('save-customer', __('Save','Shopp').$Admin->boxhelp('customer-editor-save'), 'save_meta_box', 'shopp_page_shopp-customers', 'side', 'core');
 
 function settings_meta_box ($Customer) {
 ?>
@@ -25,7 +27,7 @@ function settings_meta_box ($Customer) {
 	<br class="clear" />
 	<p>
 		<span>
-		<select name="type"><?php echo menuoptions(Lookup::customer_types(),$Customer->type); ?></select>
+		<select name="type"><?php echo Shopp::menuoptions(Lookup::customer_types(),$Customer->type); ?></select>
 		<label for="type"><?php _e('Customer Type','Shopp'); ?></label>
 		</span>
 	</p>
@@ -33,10 +35,28 @@ function settings_meta_box ($Customer) {
 	<?php do_action('shopp_customer_editor_settings',$Customer); ?>
 <?php
 }
-add_meta_box('customer-settings', __('Settings','Shopp').$Admin->boxhelp('customer-editor-settings'), 'settings_meta_box', 'shopp_page_shopp-customers', 'side', 'core');
+ShoppUI::addmetabox('customer-settings', __('Settings','Shopp').$Admin->boxhelp('customer-editor-settings'), 'settings_meta_box', 'shopp_page_shopp-customers', 'side', 'core');
 
-function password_meta_box () {
+function login_meta_box ($Customer) {
+	$wp_user = get_userdata($Customer->wpuser);
+	$avatar = get_avatar( $Customer->wpuser, 48 );
+	$userlink = add_query_arg('user_id',$Customer->wpuser,admin_url('user-edit.php'));
+
+
+	if ('wordpress' == shopp_setting('account_system')):
 ?>
+<div class="alignleft avatar">
+	<?php if ($Customer->wpuser > 0): ?><a href="<?php echo esc_url($userlink); ?>"><?php endif; ?>
+	<?php echo $avatar; ?><?php if ($Customer->wpuser > 0):?></a><?php endif; ?>
+</div>
+<p>
+	<span>
+	<input type="hidden" name="userid" id="userid" value="<?php echo esc_attr($Customer->wpuser); ?>" />
+	<input type="text" name="userlogin" id="userlogin" value="<?php echo esc_attr($wp_user->user_login); ?>" size="20" class="selectall" /><br />
+	<label for="userlogin"><?php _e('WordPress Login','Shopp'); ?></label>
+	</span>
+<?php endif; ?>
+<h4><?php _e('New Password','Shopp'); ?></h4>
 <p>
 	<input type="password" name="new-password" id="new-password" value="" size="20" class="selectall" /><br />
 	<label for="new-password"><?php _e('Enter a new password to change it.','Shopp'); ?></label>
@@ -50,20 +70,11 @@ function password_meta_box () {
 <br class="clear" />
 <?php
 }
-add_meta_box('change-password', __('Change Password','Shopp').$Admin->boxhelp('customer-editor-password'), 'password_meta_box', 'shopp_page_shopp-customers', 'side', 'core');
+ShoppUI::addmetabox('customer-login', __('Login &amp; Password','Shopp').$Admin->boxhelp('customer-editor-password'), 'login_meta_box', 'shopp_page_shopp-customers', 'side', 'core');
 
 
 function profile_meta_box ($Customer) {
-	$wp_user = get_userdata($Customer->wpuser);
-	if (!empty($wp_user)):
 ?>
-<p>
-	<span>
-	<input type="hidden" name="userid" id="userid" value="<?php echo esc_attr($Customer->wpuser); ?>" />
-	<input type="text" name="username" id="username" value="<?php echo esc_attr($wp_user->user_login); ?>" size="24" readonly="readonly" class="clickable" rel="<?php echo esc_attr(add_query_arg('user_id',$Customer->wpuser,admin_url('user-edit.php'))); ?>" /><br />
-	<label for="username"><?php _e('Login (Click to edit user)','Shopp'); ?></label>
-	</span>
-<?php endif; ?>
 <p>
 	<span>
 	<input type="text" name="firstname" id="firstname" value="<?php echo esc_attr($Customer->firstname); ?>" size="14" /><br />
@@ -93,7 +104,7 @@ function profile_meta_box ($Customer) {
 
 <?php
 }
-add_meta_box('customer-profile', __('Profile','Shopp').$Admin->boxhelp('customer-editor-profile'), 'profile_meta_box', 'shopp_page_shopp-customers', 'normal', 'core');
+ShoppUI::addmetabox('customer-profile', __('Profile','Shopp').$Admin->boxhelp('customer-editor-profile'), 'profile_meta_box', 'shopp_page_shopp-customers', 'normal', 'core');
 
 function info_meta_box ($Customer) {
 ?>
@@ -108,7 +119,7 @@ function info_meta_box ($Customer) {
 
 <?php
 }
-add_meta_box('customer-info', __('Details','Shopp').$Admin->boxhelp('customer-editor-details'), 'info_meta_box', 'shopp_page_shopp-customers', 'normal', 'core');
+ShoppUI::addmetabox('customer-info', __('Details','Shopp').$Admin->boxhelp('customer-editor-details'), 'info_meta_box', 'shopp_page_shopp-customers', 'normal', 'core');
 
 
 function billing_meta_box ($Customer) {
@@ -147,7 +158,7 @@ function billing_meta_box ($Customer) {
 <br class="clear" />
 <?php
 }
-add_meta_box('customer-billing', __('Billing Address','Shopp').$Admin->boxhelp('customer-editor-billing'), 'billing_meta_box', 'shopp_page_shopp-customers', 'normal', 'core');
+ShoppUI::addmetabox('customer-billing', __('Billing Address','Shopp').$Admin->boxhelp('customer-editor-billing'), 'billing_meta_box', 'shopp_page_shopp-customers', 'normal', 'core');
 
 function shipping_meta_box ($Customer) {
 ?>
@@ -185,6 +196,6 @@ function shipping_meta_box ($Customer) {
 <br class="clear" />
 <?php
 }
-add_meta_box('customer-shipping', __('Shipping Address','Shopp').$Admin->boxhelp('customer-editor-shipping'), 'shipping_meta_box', 'shopp_page_shopp-customers', 'normal', 'core');
+ShoppUI::addmetabox('customer-shipping', __('Shipping Address','Shopp').$Admin->boxhelp('customer-editor-shipping'), 'shipping_meta_box', 'shopp_page_shopp-customers', 'normal', 'core');
 
 ?>

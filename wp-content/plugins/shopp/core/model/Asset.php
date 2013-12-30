@@ -1,13 +1,16 @@
 <?php
 /**
- * Asset class
- * Catalog product assets (metadata, images, downloads)
+ * Asset.php
+ *
+ * Catalog assets classes (metadata, images, downloads)
  *
  * @author Jonathan Davis
  * @version 1.0
  * @copyright Ingenesis Limited, 28 March, 2008
  * @package shopp
  **/
+
+defined( 'WPINC' ) || header( 'HTTP/1.1 403' ) & exit; // Prevent direct access
 
 /**
  * FileAsset class
@@ -20,70 +23,39 @@
  * @package shopp
  * @subpackage asset
  **/
-class FileAsset extends MetaObject {
+class FileAsset extends ShoppMetaObject {
 
-	var $mime;
-	var $size;
-	var $storage;
-	var $uri;
-	var $context = 'product';
-	var $type = 'asset';
-	var $_xcols = array('mime','size','storage','uri');
+	public $mime;
+	public $size;
+	public $storage;
+	public $uri;
+	public $context = 'product';
+	public $type = 'asset';
+	public $_xcols = array('mime', 'size', 'storage', 'uri');
 
-	function __construct ($id=false) {
-		global $Shopp;
+	public function __construct ( $id = false ) {
 		$this->init(self::$table);
 		$this->extensions();
-		if (!$id) return;
+		if ( ! $id ) return;
 		$this->load($id);
 
+		if ( ! empty($this->id) )
+			$this->expopulate();
 	}
 
 	/**
-	 * Load a FileAsset from the database
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @return void Description...
-	 **/
-	function load ($id) {
-		if (is_array($id)) parent::load($id);
-		parent::load(array('id'=>$id,'type'=>$this->type));
-		if (empty($this->id)) return false;
-		$this->expopulate();
-	}
-
-	/**
-	 * Populate extended fields loaded from the MetaObject
+	 * Populate extended fields loaded from the ShoppMetaObject
 	 *
 	 * @author Jonathan Davis
 	 * @since 1.1
 	 *
 	 * @return void
 	 **/
-	function expopulate () {
-		if (is_object($this->value)) {
-			$properties = $this->value;
-			unset($this->value);
-			$this->copydata($properties);
+	public function expopulate () {
+		parent::expopulate();
+
+		if ( is_string($this->uri) )
 			$this->uri = stripslashes($this->uri);
-		}
-	}
-
-	/**
-	 * Save the object back to the database
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @return void
-	 **/
-	function save () {
-		$this->value = new stdClass();
-		foreach ($this->_xcols as $col)
-			$this->value->{$col} = $this->{$col};
-		parent::save();
 	}
 
 	/**
@@ -92,12 +64,17 @@ class FileAsset extends MetaObject {
 	 * @author Jonathan Davis
 	 * @since 1.1
 	 *
-	 * @return void
+	 * @param $data Data to save
+	 * @param $type (optional) Type of data to save
+	 * @return mixed
 	 **/
-	function store ($data,$type='binary') {
-		$Engine = $this->_engine();
-		$this->uri = $Engine->save($this,$data,$type);
-		if ($this->uri === false) return false;
+	public function store ( $data, $type = 'binary' ) {
+		$Engine = $this->engine();
+
+		$saved = $Engine->save($this, $data, $type);
+		if ( empty($saved) || is_a($saved, 'ShoppError') ) return false;
+
+		$this->uri = $saved;
 		return true;
 	}
 
@@ -109,8 +86,8 @@ class FileAsset extends MetaObject {
 	 *
 	 * @return void
 	 **/
-	function retrieve () {
-		$Engine = $this->_engine();
+	public function retrieve () {
+		$Engine = $this->engine();
 		return $Engine->load($this->uri);
 	}
 
@@ -122,9 +99,9 @@ class FileAsset extends MetaObject {
 	 *
 	 * @return void
 	 **/
-	function readmeta () {
-		$Engine = $this->_engine();
- 		list($this->size,$this->mime) = array_values($Engine->meta($this->uri,$this->name));
+	public function readmeta () {
+		$Engine = $this->engine();
+		list($this->size, $this->mime) = array_values($Engine->meta($this->uri, $this->name));
 	}
 
 	/**
@@ -135,10 +112,11 @@ class FileAsset extends MetaObject {
 	 *
 	 * @return void
 	 **/
-	function found ($uri=false) {
-		if (!empty($this->data)) return true;
-		if (!$uri) $uri = $this->uri;
-		$Engine = $this->_engine();
+	public function found ( $uri = false ) {
+		if ( ! empty($this->data) ) return true;
+		if ( ! $uri && ! $this->uri ) return false;
+		if ( ! $uri ) $uri = $this->uri;
+		$Engine = $this->engine();
 		return $Engine->exists($uri);
 	}
 
@@ -147,28 +125,26 @@ class FileAsset extends MetaObject {
 	 *
 	 * @author Jonathan Davis
 	 * @since 1.1
-	 *
-	 * @return void Description...
 	 **/
-	function &_engine () {
-		global $Shopp;
-		if (!isset($Shopp->Storage)) $Shopp->Storage = new StorageEngines();
+	public function &engine () {
+		global $Shopp; // Must remain global reference, not singleton to prevent loading core plugin in image server context
 
-		if (!empty($this->storage)) {
-			// Use the storage engine setting of the asset
-			if (isset($Shopp->Storage->active[$this->storage])) {
-				$Engine = $Shopp->Storage->active[$this->storage];
-			} else if (isset($Shopp->Storage->modules[$this->storage])) {
-				$Module = new ModuleFile(SHOPP_STORAGE,$Shopp->Storage->modules[$this->storage]->filename);
-				$Engine = $Module->load();
-			}
-		} elseif (isset($Shopp->Storage->engines[$this->type])) {
-			// Pick storage engine from Shopp-loaded engines by type of asset
-			$engine = $Shopp->Storage->engines[$this->type];
-			$this->storage = $engine;
-			$Engine = $Shopp->Storage->active[$engine];
-		}
-		if (!empty($Engine)) $Engine->context($this->type);
+		if ( ! isset($Shopp->Storage) )	$Shopp->Storage = new StorageEngines;
+		$StorageEngines = $Shopp->Storage;
+
+		$Engine = false;
+		if ( empty($this->storage) )
+			$this->storage = $StorageEngines->type($this->type);
+
+		$Engine = $StorageEngines->get($this->storage);
+
+		if ( false === $Engine ) // If no engine found, force DBStorage (to provide a working StorageEngine to the Asset)
+		$Engine = $StorageEngines->activate('DBStorage');
+
+		if ( false === $Engine ) // If no engine is available at all, we're screwed.
+		wp_die('No Storage Engine available. Cannot continue.');
+
+		$Engine->context($this->type);
 
 		return $Engine;
 	}
@@ -181,7 +157,50 @@ class FileAsset extends MetaObject {
 	 *
 	 * @return void
 	 **/
-	function extensions () {}
+	public function extensions () {
+		/** Not Implemented **/
+	}
+
+	public static function mimetypes () {
+		add_filter('mime_types', array(__CLASS__, 'xmime'));
+	}
+
+	public static function xmime ( array $mimetypes = array() ) {
+		static $extensions = array(
+			'ac3' => 'audio/ac3',
+			'aif|aifc|aiff' => 'audio/x-aiff',
+			'ai|eps|ps' => 'application/postscript',
+			'au|snd' => 'audio/basic',
+			'cat' => 'application/vnd.ms-pkiseccat',
+			'clp' => 'application/x-msclip',
+			'crd' => 'application/x-mscardfile',
+			'dll' => 'application/x-msdownload',
+			'doc|dot|word|w6w' => 'application/msword',
+			'epub' => 'application/epub+zip',
+			'gtar' => 'application/x-gtar',
+			'ics|ifb' => 'text/calendar',
+			'ief' => 'image/ief',
+			'jpe|jpeg|jpg' => 'image/jpeg',
+			'm13|m14|mvb' => 'application/x-msmediaview',
+			'mny' => 'application/x-msmoney',
+			'mobi' => 'application/x-mobipocket-ebook',
+			'movie' => 'video/x-sgi-movie',
+			'mp3' => 'audio/x-mpeg',
+			'mp4' => 'video/mp4',
+			'mpa' => 'audio/MPA',
+			'mpe|mpeg|mpg' => 'video/mpeg',
+			'msg' => 'application/vnd.ms-outlook',
+			'pict' => 'image/pict',
+			'pub' => 'application/x-mspublisher',
+			'scd' => 'application/x-msschedule',
+			'sst' => 'application/vnd.ms-pkicertstore',
+			'stl' => 'application/vnd.ms-pkistl',
+			'trm' => 'application/x-msterminal',
+			'wmf' => 'application/x-msmetafile',
+			'xla|xlc|xlm|xls|xlt|xlw' => 'application/vnd.ms-excel'
+		);
+		return array_merge($mimetypes, $extensions);
+	}
 
 } // END class FileAsset
 
@@ -197,32 +216,100 @@ class FileAsset extends MetaObject {
  **/
 class ImageAsset extends FileAsset {
 
-	// Allowable settings
-	var $_scaling = array('all','matte','crop','width','height');
-	var $_sharpen = 500;
-	var $_quality = 100;
+	const WIDTH = 0;
+	const HEIGHT = 1;
+	const SCALE = 2;
+	const SHARPEN = 3;
+	const QUALITY = 4;
+	const FILL = 5;
 
-	var $width;
-	var $height;
-	var $alt;
-	var $title;
-	var $settings;
-	var $filename;
-	var $type = 'image';
+	public static $defaults = array(
+		'scaling' => array('all', 'matte', 'crop', 'width', 'height'),
+		'sharpen' => 0,
+		'quality' => 80
+	);
 
-	function output ($headers=true) {
-		if ($headers) {
-			$Engine = $this->_engine();
+	public $width;
+	public $height;
+	public $alt;
+	public $title;
+	public $settings;
+	public $filename;
+	public $type = 'image';
+
+	/**
+	 * Returns a URL for a resized image.
+	 *
+	 * If direct mode is enabled (which it is by
+	 * default) and the image is already cached to the file system then a URL for that
+	 * file will be returned.
+	 *
+	 * In all other cases a Shopp Image Server URL will be returned.
+	 *
+	 * @param $width
+	 * @param $height
+	 * @param $scale
+	 * @param $sharpen
+	 * @param $quality
+	 * @param $fill
+	 * @return string
+	 */
+	public function url ( $width = false, $height = false, $scale = false, $sharpen = false, $quality = false, $fill = false ) {
+
+		$request = array();
+
+		$url = Shopp::url( '' != get_option('permalink_structure') ? trailingslashit($this->id) . $this->filename : $this->id, 'images' );
+
+		// Handle resize requests
+		$params = func_get_args();
+		if ( count($params) > 0 ) {
+			list($width, $height, $scale, $sharpen, $quality, $fill) = $params;
+			$request = $this->resizing($width, $height, $scale, $sharpen, $quality, $fill);
+
+			// Build the path to the cached copy of the file (if it exists)
+			$size = $this->cachefile( $request );
+			$this->uri = "cache_{$size}_{$this->filename}";
+
+		}
+
+		// Ask the engine if we have a direct URL
+		$direct_url = $this->engine()->direct($this->uri);
+		if ( false !== $direct_url ) return $direct_url;
+
+		if ( empty($request) ) return $url;
+		else return Shopp::add_query_string( $request, $url);
+
+	}
+
+	/**
+	 * Takes the comma separated output of the resizing() method and returns the
+	 * equivalent filename component.
+	 *
+	 * @param string $request
+	 * @return string A valid string for file names
+	 */
+	protected function cachefile ( $request ) {
+		$query = explode(',', $request);
+		array_pop($query); // Lop off the validation variable
+		return implode('_', $query);
+	}
+
+
+	public function output ( $headers = true ) {
+
+		if ( $headers ) {
+			$Engine = $this->engine();
 			$data = $this->retrieve($this->uri);
+
 			$etag = md5($data);
 			$offset = 31536000;
 
 			if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
 				if (@strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) == $this->modified ||
-				    trim($_SERVER['HTTP_IF_NONE_MATCH']) == $etag) {
-				    header("HTTP/1.1 304 Not Modified");
+					trim($_SERVER['HTTP_IF_NONE_MATCH']) == $etag) {
+					header("HTTP/1.1 304 Not Modified");
 					header("Content-type: {$this->mime}");
-				    exit;
+					exit;
 				}
 			}
 
@@ -231,21 +318,23 @@ class ImageAsset extends FileAsset {
 			header('Last-Modified: '.date('D, d M Y H:i:s', $this->modified).' GMT');
 			if (!empty($etag)) header('ETag: '.$etag);
 
-			header("Content-type: {$this->mime}");
-			if (!empty($this->filename))
-				header("Content-Disposition: inline; filename=".$this->filename);
-			else header("Content-Disposition: inline; filename=image-".$this->id.".jpg");
+			header("Content-type: $this->mime");
+
+			$filename = empty($this->filename) ? "image-$this->id.jpg" : $this->filename;
+			header('Content-Disposition: inline; filename="'.$filename.'"');
 			header("Content-Description: Delivered by WordPress/Shopp Image Server ({$this->storage})");
+			do_action('shopp_image_output_headers', $this);
 		}
+
 		if (!empty($data)) echo $data;
 		else $Engine->output($this->uri);
 		ob_flush(); flush();
 		return;
 	}
 
-	function scaled ($width,$height,$fit='all') {
-		if (preg_match('/^\d+$/',$fit))
-			$fit = $this->_scaling[$fit];
+	public function scaled ( $width, $height, $fit = 'all' ) {
+		if ( preg_match('/^\d+$/', $fit) )
+			$fit = self::$defaults['scaling'][$fit];
 
 		$d = array('width'=>$this->width,'height'=>$this->height);
 		switch ($fit) {
@@ -266,16 +355,16 @@ class ImageAsset extends FileAsset {
 		return $d;
 	}
 
-	function scaledWidth ($width,$height) {
-		$d = array('width'=>$this->width,'height'=>$this->height);
+	public function scaledWidth ( $width, $height ) {
+		$d = array('width' => $this->width, 'height' => $this->height);
 		$scale = $width / $this->width;
 		$d['width'] = $width;
 		$d['height'] = ceil($this->height * $scale);
 		return $d;
 	}
 
-	function scaledHeight ($width,$height) {
-		$d = array('width'=>$this->width,'height'=>$this->height);
+	public function scaledHeight ( $width, $height ) {
+		$d = array('width' => $this->width, 'height' => $this->height);
 		$scale = $height / $this->height;
 		$d['height'] = $height;
 		$d['width'] = ceil($this->width * $scale);
@@ -288,23 +377,92 @@ class ImageAsset extends FileAsset {
 	 * @author Jonathan Davis
 	 * @since 1.1
 	 *
-	 * @return void
-	 **/
-	function resizing ($width,$height,$scale=false,$sharpen=false,$quality=false,$fill=false) {
-		$key = (defined('SECRET_AUTH_KEY') && SECRET_AUTH_KEY != '')?SECRET_AUTH_KEY:DB_PASSWORD;
+	 * @param $width
+	 * @param $height
+	 * @param bool $scale = null
+	 * @param bool $sharpen = null
+	 * @param bool $quality = null
+	 * @param bool $fill = null
+	 * @return string
+	 */
+	public function resizing ( $width, $height, $scale = null, $sharpen = null, $quality = null, $fill = null ) {
 		$args = func_get_args();
 
-		if ($args[1] == 0) $args[1] = $args[0];
+		$args = array(
+			self::WIDTH => (int) $args[ self::WIDTH ],
+			self::HEIGHT => ( 0 == $args[ self::HEIGHT ] ) ? (int) $args[ self::WIDTH ] : (int) $args[ self::HEIGHT ],
+			self::SCALE => ( isset($args[ self::SCALE ]) ) ? (int) $args[ self::SCALE ] : 0,
+			self::SHARPEN => ( isset($args[ self::SHARPEN ]) ) ? (int) $args[ self::SHARPEN ] : self::$defaults['sharpen'],
+			self::QUALITY => ( isset($args[ self::QUALITY ]) ) ? (int) $args[ self::QUALITY ] : self::$defaults['quality']
+		);
 
-		$message = rtrim(join(',',$args),',');
-
-		$validation = crc32($key.$this->id.','.$message);
+		// Form the checksummed message
+		$message = rtrim(join(',', $args), ',');
+		$validation = self::checksum($this->id, $args);
 		$message .= ",$validation";
 		return $message;
 	}
 
-	function extensions () {
-		array_push($this->_xcols,'filename','width','height','alt','title','settings');
+	/**
+	 * Builds a salted checksum from the image request parameters
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.3
+	 *
+	 * @param integer $id The image id
+	 * @param array $args The parameters array
+	 * @return string The generated checksum
+	 **/
+	public static function checksum ( $id, array $args ) {
+		$key = defined('SECRET_AUTH_KEY') && '' != SECRET_AUTH_KEY ? SECRET_AUTH_KEY : DB_PASSWORD;
+		array_unshift($args, $id);
+		$args = array_filter($args, array(__CLASS__, 'notempty'));
+		$message = join(',', $args);
+		return sprintf('%u', crc32($key . $message));
+	}
+
+	/**
+	 * Helper to filter for non-empty parameters
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.3
+	 *
+	 * @param scalar $value The value to evaluate
+	 * @return boolean True if not empty, false otherwise
+	 **/
+	public static function notempty ( $value ) {
+		return ( '' !== $value && false !== $value );
+	}
+
+	public function extensions () {
+		array_push($this->_xcols, 'filename', 'width', 'height', 'alt', 'title', 'settings');
+	}
+
+	/**
+	 * unique - returns true if the the filename is unique, or can be made unique reasonably
+	 *
+	 * @author John Dillick
+	 * @since 1.2
+	 *
+	 * @return bool true on success, false on fail
+	 **/
+	public function unique () {
+		$Existing = new ImageAsset();
+		$Existing->uri = $this->filename;
+		$limit = 100;
+		while ( $Existing->found() ) { // Rename the filename of the image if it already exists
+			list( $name, $ext ) = explode(".", $Existing->uri);
+			$_ = explode("-", $name);
+			$last = count($_) - 1;
+			$suffix = $last > 0 ? intval($_[$last]) + 1 : 1;
+			if ( $suffix == 1 ) $_[] = $suffix;
+			else $_[$last] = $suffix;
+			$Existing->uri = join("-", $_).'.'.$ext;
+			if ( ! $limit-- ) return false;
+		}
+		if ( $Existing->uri !== $this->filename )
+			$this->filename = $Existing->uri;
+		return true;
 	}
 }
 
@@ -318,7 +476,7 @@ class ImageAsset extends FileAsset {
  * @package shopp
  **/
 class ProductImage extends ImageAsset {
-	var $context = 'product';
+	public $context = 'product';
 
 	/**
 	 * Truncate image data when stored in a session
@@ -332,13 +490,13 @@ class ProductImage extends ImageAsset {
 	 *
 	 * @return array
 	 **/
-	function __sleep () {
-		$ignore = array('numeral','created','modified','parent');
+	public function __sleep () {
+		$ignore = array('numeral', 'created', 'modified', 'parent');
 		$properties = get_object_vars($this);
 		$session = array();
-		foreach ($properties as $property => $value) {
-			if (substr($property,0,1) == "_") continue;
-			if (in_array($property,$ignore)) continue;
+		foreach ( $properties as $property => $value ) {
+			if ( substr($property, 0, 1) == "_" ) continue;
+			if ( in_array($property,$ignore) ) continue;
 			$session[] = $property;
 		}
 		return $session;
@@ -356,7 +514,7 @@ class ProductImage extends ImageAsset {
  * @subpackage asset
  **/
 class CategoryImage extends ImageAsset {
-	var $context = 'category';
+	public $context = 'category';
 }
 
 /**
@@ -372,299 +530,210 @@ class CategoryImage extends ImageAsset {
  **/
 class DownloadAsset extends FileAsset {
 
-	var $type = 'download';
-	var $context = 'product';
-	var $etag = "";
-	var $purchased = false;
+	public $type = 'download';
+	public $context = 'product';
+	public $etag = "";
+	public $purchased = false;
 
-	function loadby_dkey ($key) {
-		$db = &DB::get();
-		require_once(SHOPP_MODEL_PATH."/Purchased.php");
-		$pricetable = DatabaseObject::tablename(Price::$table);
+	public function loadby_dkey ($key) {
+		$pricetable = ShoppDatabaseObject::tablename(ShoppPrice::$table);
 
-		$Purchased = new Purchased($key,"dkey");
-		if (!empty($Purchased->id)) {
+		$Purchased = new ShoppPurchased($key,'dkey');
+		if ( ! empty($Purchased->id) ) {
 			// Handle purchased line-item downloads
-			$Purchase = new Purchase($Purchased->purchase);
-			$record = $db->query("SELECT download.* FROM $this->_table AS download LEFT JOIN $pricetable AS pricing ON pricing.id=download.parent WHERE pricing.id=$Purchased->price AND download.context='price' AND download.type='download' LIMIT 1");
+			$Purchase = new ShoppPurchase($Purchased->purchase);
+			$record = sDB::query("SELECT download.* FROM $this->_table AS download INNER JOIN $pricetable AS pricing ON pricing.id=download.parent WHERE pricing.id=$Purchased->price AND download.context='price' AND download.type='download' ORDER BY modified DESC LIMIT 1");
 			$this->populate($record);
 			$this->expopulate();
 			$this->purchased = $Purchased->id;
 		} else {
 			// Handle purchased line-item meta downloads (addon downloads)
-			$MetaDownload = new MetaObject(array(
+			$this->load(array(
 				'context' => 'purchased',
 				'type' => 'download',
 				'name' => $key
 			));
-			$this->load($MetaDownload->value);
-			$this->purchased = $MetaDownload->parent;
+			$this->expopulate();
+			$this->purchased = $this->parent;
 		}
 
 		$this->etag = $key;
 	}
 
-	function purchased () {
-		require_once(SHOPP_MODEL_PATH."/Purchased.php");
+	public function purchased () {
+		if (!class_exists('ShoppPurchased')) require(SHOPP_MODEL_PATH."/Purchased.php");
 		if (!$this->purchased) return false;
-		return new Purchased($this->purchased);
+		return new ShoppPurchased($this->purchased);
 	}
 
-	function download ($dkey=false) {
+	public function download ($dkey=false) {
 		$found = $this->found();
-		if (!$found) return false;
+		if ( ! $found ) return shopp_add_error(Shopp::__('Download failed. &quot;%s&quot; could not be found.', $this->name), 'false');
 
-		if (!isset($found['redirect'])) {
-			// Close the session in case of long download
-			@session_write_close();
+		add_action('shopp_download_success',array($this,'downloaded'));
 
-			// Don't want interference from the server
-		    if (function_exists('apache_setenv')) @apache_setenv('no-gzip', 1);
-		    @ini_set('zlib.output_compression', 0);
-
-			set_time_limit(0);	// Don't timeout on long downloads
-			// ob_end_clean();		// End any automatic output buffering
-
-			header("Pragma: public");
-			header("Cache-Control: maxage=1");
-			header("Content-type: application/octet-stream");
-			header("Content-Disposition: attachment; filename=\"".$this->name."\"");
-			header("Content-Description: Delivered by WordPress/Shopp ".SHOPP_VERSION);
+		// send immediately if the storage engine is redirecting
+		if ( isset($found['redirect']) ) {
+			$this->send();
+			exit();
 		}
-		$this->send();
+
+		// Close the session in case of long download
+		@session_write_close();
+
+		// Don't want interference from the server
+		if ( function_exists('apache_setenv') ) @apache_setenv('no-gzip', 1);
+		@ini_set('zlib.output_compression', 0);
+
+		set_time_limit(0);	// Don't timeout on long downloads
+
+		// Use HTTP/1.0 Expires to support bad browsers (trivia: timestamp used is the Shopp 1.0 release date)
+		header('Expires: '.date('D, d M Y H:i:s O',1230648947));
+
+		header('Cache-Control: maxage=0, no-cache, must-revalidate');
+		header('Content-type: application/octet-stream');
+		header("Content-Transfer-Encoding: binary");
+		header('Content-Disposition: attachment; filename="'.$this->name.'"');
+		header('Content-Description: Delivered by ' . ShoppVersion::agent());
+
+		ignore_user_abort(true);
+		ob_end_flush(); // Don't use the PHP output buffer
+
+		$this->send();	// Send the file data using the storage engine
+
+		flush(); // Flush output to browser (to poll for connection)
+		if ( connection_aborted() ) return shopp_add_error(Shopp::__('Connection broken. Download attempt failed.'), SHOPP_COMM_ERR);
 
 		return true;
 	}
 
-	function send () {
-		$Engine = $this->_engine();
-		$Engine->output($this->uri,$this->etag);
+	public function downloaded ($Purchased=false) {
+		if (false === $Purchased) return;
+		$Purchased->downloads++;
+		$Purchased->save();
 	}
 
+	public function send () {
+		$Engine = $this->engine();
+		$Engine->output($this->uri,$this->etag);
+	}
 
 }
 
 class ProductDownload extends DownloadAsset {
-	var $context = 'price';
+	public $context = 'price';
 }
 
-/**
- * StorageEngines class
- *
- * Storage engine file manager to load storage engines that are active.
- *
- * @author Jonathan Davis
- * @since 1.1
- * @package shopp
- * @subpackage storage
- **/
-class StorageEngines extends ModuleLoader {
+// Prevent loading image setting classes when run in image server script context
+if ( !class_exists('ListFramework') ) return;
 
-	var $engines = array();
-	var $activate = false;
+class ImageSetting extends ShoppMetaObject {
 
-	/**
-	 * Initializes the shipping module loader
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @return void
-	 **/
-	function __construct () {
-		$this->path = SHOPP_STORAGE;
+	static $qualities = array(100,92,80,70,60);
+	static $fittings = array('all','matte','crop','width','height');
 
-		if(function_exists('add_action')) add_action('shopp_module_loaded',array(&$this,'actions'));
+	public $width;
+	public $height;
+	public $fit = 0;
+	public $quality = 100;
+	public $sharpen = 100;
+	public $bg = false;
+	public $context = 'setting';
+	public $type = 'image_setting';
+	public $_xcols = array('width','height','fit','quality','sharpen','bg');
 
-		$this->installed();
-		$this->activated();
-		$this->load();
+	public function __construct ($id=false,$key='id') {
+		$this->init(self::$table);
+		$this->load($id,$key);
 	}
 
-	/**
-	 * Determines the activated storage engine modules
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @return array List of module names for the activated modules
-	 **/
-	function activated () {
-		global $Shopp;
+	public function fit_menu () {
+		return array(	__('All','Shopp'),
+			__('Fill','Shopp'),
+			__('Crop','Shopp'),
+			__('Width','Shopp'),
+			__('Height','Shopp')
+		);
+	}
 
-		$this->activated = array();
+	public function quality_menu () {
+		return array(	__('Highest quality, largest file size','Shopp'),
+			__('Higher quality, larger file size','Shopp'),
+			__('Balanced quality &amp; file size','Shopp'),
+			__('Lower quality, smaller file size','Shopp'),
+			__('Lowest quality, smallest file size','Shopp')
+		);
+	}
 
-		$systems = array();
-		$systems['image'] = $Shopp->Settings->get('image_storage');
-		$systems['download'] = $Shopp->Settings->get('product_storage');
+	public function fit_value ($value) {
+		if (isset(self::$fittings[$value])) return self::$fittings[$value];
+		return self::$fittings[0];
+	}
 
-		foreach ($systems as $system => $storage) {
-			foreach ($this->modules as $engine) {
-				if ($engine->subpackage == $storage) {
-					$this->activated[] = $engine->subpackage;
-					$this->engines[$system] = $engine->subpackage;
-					break; // Check for next system engine
-				}
-			}
+	public function quality_value ($value) {
+		if (isset(self::$qualities[$value])) return self::$qualities[$value];
+		return self::$qualities[2];
+	}
+
+	public function options ($prefix='') {
+		$settings = array();
+		$properties = array('width','height','fit','quality','sharpen','bg');
+		foreach ($properties as $property) {
+			$value = $this->{$property};
+			if ('quality' == $property) $value = $this->quality_value($this->{$property});
+			if ('fit' == $property) $value = $this->fit_value($this->{$property});
+			$settings[$prefix.$property] = $value;
 		}
+		return $settings;
+	}
 
-		return $this->activated;
+} // END class ImageSetting
+
+class ImageSettings extends ListFramework {
+
+	private static $instance;
+
+	public function __construct () {
+		$ImageSetting = new ImageSetting();
+		$table = $ImageSetting->_table;
+		$where = array(
+			"type='$ImageSetting->type'",
+			"context='$ImageSetting->context'"
+		);
+		$options = compact('table','where');
+		$query = sDB::select($options);
+		$this->populate(sDB::query($query,'array',array($ImageSetting,'loader'),false,'name'));
+		$this->found = sDB::found();
 	}
 
 	/**
-	 * Loads all the installed storage engine modules for the settings page
+	 * Prevents cloning the DB singleton
 	 *
 	 * @author Jonathan Davis
-	 * @since 1.1
+	 * @since 1.0
 	 *
 	 * @return void
 	 **/
-	function settings () {
-		$this->load(true);
+	public function __clone () {
+		trigger_error('Clone is not allowed.', E_USER_ERROR);
 	}
 
 	/**
-	 * Sets up the storage engine settings interfaces
+	 * Provides a reference to the instantiated singleton
+	 *
+	 * The ImageSettings class uses a singleton to ensure only one DB object is
+	 * instantiated at any time
 	 *
 	 * @author Jonathan Davis
-	 * @since 1.1
+	 * @since 1.0
 	 *
-	 * @return void
+	 * @return DB Returns a reference to the DB object
 	 **/
-	function ui () {
-		foreach ($this->active as $package => &$module)
-			$module->setupui($package,$this->modules[$package]->name);
+	public static function &__instance () {
+		if (!self::$instance instanceof self)
+			self::$instance = new self;
+		return self::$instance;
 	}
 
-	function actions ($module) {
-		if (!isset($this->active[$module])) return;
 
-		// Register contexts the module is a handler for
-		foreach ($this->engines as $system => $handler)
-			if ($module == $handler) $this->active[$module]->contexts[] = $system;
-
-		if (method_exists($this->active[$module],'actions'))
-			$this->active[$module]->actions();
-	}
-
-}
-
-/**
- * StorageEngine interface
- *
- * Provides a template for storage engine modules to implement
- *
- * @author Jonathan Davis
- * @since 1.1
- * @package shopp
- * @subpackage storage
- **/
-interface StorageEngine {
-
-	/**
-	 * Load a resource by the uri
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @param string $uri The uniform resource indicator
-	 * @return void
-	 **/
-	public function load($uri);
-
-	/**
-	 * Output the asset data of a given uri
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @param string $uri The uniform resource indicator
-	 * @return void
-	 **/
-	public function output($uri);
-
-	/**
-	 * Checks if the binary data of an asset exists
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @param string $uri The uniform resource indicator
-	 * @return boolean
-	 **/
-	public function exists($uri);
-
-	/**
-	 * Store the data for an asset
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @param FileAsset $asset The parent asset for the data
-	 * @param mixed $data The raw data to be stored
-	 * @param string $type (optional) Type of data source, one of binary or file (file referring to a filepath)
-	 * @return void
-	 **/
-	public function save($asset,$data,$type='binary');
-
-}
-
-/**
- * StorageModule class
- *
- * A framework for storage engine modules.
- *
- * @author Jonathan Davis
- * @since 1.1
- * @package shopp
- * @subpackage storage
- **/
-abstract class StorageModule {
-
-	var $contexts;
-	var $settings;
-
-	function __construct () {
-		global $Shopp;
-		$this->module = get_class($this);
-		if (!isset($Shopp->Settings)) {
-			$Settings = new Settings($this->module);
-			$this->settings = $Settings->get($this->module);
-		} else $this->settings = $Shopp->Settings->get($this->module);
-	}
-
-	function context ($setting) {}
-	function settings () {}
-
-	/**
-	 * Generate the settings UI for the module
-	 *
-	 * @author Jonathan Davis
-	 * @since 1.1
-	 *
-	 * @param string $module The module class name
-	 * @param string $name The formal name of the module
-	 * @return void
-	 **/
-	function setupui ($module,$name) {
-		$this->ui = new ModuleSettingsUI('storage',$module,$name,false,false);
-		$this->settings();
-	}
-
-	function output ($uri) {
-		$data = $this->load($uri);
-		header ("Content-length: ".strlen($data));
-		echo $data;
-	}
-
-	function meta () {
-		return false;
-	}
-
-	function handles ($context) {
-		return in_array($context,$this->contexts);
-	}
-
-}
-
-?>
+} // END class ImageSettings

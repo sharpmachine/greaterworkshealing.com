@@ -1,114 +1,159 @@
 <div class="wrap shopp">
 	<div class="icon32"></div>
-	<h2><?php _e('Categories','Shopp'); ?> <a href="<?php echo esc_url(add_query_arg(array_merge(stripslashes_deep($_GET),array('page'=>$this->Admin->pagename('categories'),'id'=>'new')),admin_url('admin.php'))); ?>" class="button add-new"><?php _e('New Category','Shopp'); ?></a></h2>
-	<?php if (!empty($this->Notice)): ?><div id="message" class="updated fade"><p><?php echo $this->Notice; ?></p></div><?php endif; ?>
+	<h2><?php Shopp::_e('Categories'); ?> <a href="<?php echo esc_url(add_query_arg(array_merge(stripslashes_deep($_GET), array('page'=> $this->page(), 'id'=> 'new')), admin_url('admin.php'))); ?>" class="add-new-h2"><?php Shopp::_e('Add New'); ?></a></h2>
 
-	<form action="" id="categories" method="get">
-	<div>
-		<input type="hidden" name="page" value="<?php echo $this->Admin->pagename('categories'); ?>" />
-	</div>
+	<?php do_action('shopp_admin_notices'); ?>
+
+	<form action="<?php echo esc_url($url); ?>" id="categories" method="get">
+	<?php include('navigation.php'); ?>
 
 	<p id="post-search" class="search-box">
 		<input type="text" id="categories-search-input" class="search-input" name="s" value="<?php echo esc_attr(stripslashes($s)); ?>" />
 		<input type="submit" value="<?php _e('Search Categories','Shopp'); ?>" class="button" />
 	</p>
 
-	<div class="tablenav">
-		<?php if ($page_links) echo "<div class='tablenav-pages'>$page_links</div>"; ?>
-		<div class="alignleft actions">
-			<button type="submit" id="delete-button" name="deleting" value="category" class="button-secondary"><?php _e('Delete','Shopp'); ?></button>
-			&nbsp;
-			<a href="<?php echo esc_url(add_query_arg(array_merge(stripslashes_deep($_GET),array('page'=>$this->Admin->pagename('categories'),'a'=>'arrange')),admin_url('admin.php'))); ?>" class="button add-new"><?php _e('Arrange','Shopp'); ?></a>
-		</div>
-		<div class="clear"></div>
+	<div class="clear">
+		<input type="hidden" name="page" value="<?php echo $this->page(); ?>" />
+		<?php wp_nonce_field('shopp_categories_manager'); ?>
 	</div>
-	<div class="clear"></div>
+
+	<div class="tablenav top">
+		<div class="alignleft actions">
+		<select name="action" id="actions">
+			<option value="" selected="selected"><?php _e('Bulk Actions&hellip;','Shopp'); ?></option>
+			<?php echo Shopp::menuoptions(array('delete' => Shopp::__('Delete')), false, true); ?>
+		</select>
+		<input type="submit" value="<?php esc_attr_e('Apply','Shopp'); ?>" id="apply" class="button action" />
+		</div>
+
+		<?php $ListTable->pagination( 'top' ); ?>
+	</div>
 
 	<table class="widefat" cellspacing="0">
 		<thead>
-		<tr><?php print_column_headers('shopp_page_shopp-categories'); ?></tr>
+		<tr><?php ShoppUI::print_column_headers($this->screen); ?></tr>
 		</thead>
 		<tfoot>
-		<tr><?php print_column_headers('shopp_page_shopp-categories',false); ?></tr>
+		<tr><?php ShoppUI::print_column_headers($this->screen,false); ?></tr>
 		</tfoot>
-	<?php if (sizeof($Categories) > 0): ?>
+	<?php if (count($Categories) > 0): ?>
 		<tbody id="categories-table" class="list categories">
 		<?php
-		$hidden = array();
-		$hidden = get_hidden_columns('shopp_page_shopp-categories');
+		$columns = get_column_headers($this->screen);
+		$hidden = get_hidden_columns($this->screen);
 
 		$even = false;
 		foreach ($Categories as $Category):
-
-		$editurl = esc_url(add_query_arg(array_merge($_GET,
-			array('page'=>$this->Admin->pagename('categories'),
-					'id'=>$Category->id)),
-					admin_url('admin.php')));
-
-		$deleteurl = esc_url(add_query_arg(array_merge($_GET,
-			array('page'=>$this->Admin->pagename('categories'),
-					'delete[]'=>$Category->id,
-					'deleting'=>'category')),
-					admin_url('admin.php')));
-
-		$CategoryName = empty($Category->name)?'('.__('no category name','Shopp').')':$Category->name;
 		?>
-		<tr<?php if (!$even) echo " class='alternate'"; $even = !$even; ?>>
-			<th scope='row' class='check-column'><input type='checkbox' name='delete[]' value='<?php echo $Category->id; ?>' /></th>
-			<td><a class='row-title' href='<?php echo $editurl; ?>' title='<?php _e('Edit','Shopp'); ?> &quot;<?php echo esc_attr($CategoryName); ?>&quot;'><?php echo str_repeat("&#8212; ",$Category->depth); echo esc_html($CategoryName); ?></a>
-				<div class="row-actions">
-					<span class='edit'><a href="<?php echo $editurl; ?>" title="<?php _e('Edit','Shopp'); ?> &quot;<?php echo esc_attr($CategoryName); ?>&quot;"><?php _e('Edit','Shopp'); ?></a> | </span>
-					<span class='delete'><a class='submitdelete' title='<?php _e('Delete','Shopp'); ?> &quot;<?php echo esc_attr($CategoryName); ?>&quot;' href="<?php echo $deleteurl; ?>" rel="<?php echo $Category->id; ?>"><?php _e('Delete','Shopp'); ?></a> | </span>
-					<span class='view'><a href="<?php echo shoppurl(SHOPP_PRETTYURLS?"category/$Category->uri":array('shopp_category'=>$Category->id)); ?>" title="<?php _e('View','Shopp'); ?> &quot;<?php echo esc_attr($CategoryName); ?>&quot;" rel="permalink" target="_blank"><?php _e('View','Shopp'); ?></a></span>
-				</div>
-			</td>
-			<td width="5%" class="num links column-links<?php echo in_array('links',$hidden)?' hidden':''; ?>"><?php echo $Category->total; ?></td>
-			<td width="5%" class="templates column-templates<?php echo ($Category->spectemplate == "on")?' spectemplates':''; echo in_array('templates',$hidden)?' hidden':''; ?>">&nbsp;</td>
-			<td width="5%" class="menus column-menus<?php echo ($Category->facetedmenus == "on")?' facetedmenus':''; echo in_array('menus',$hidden)?' hidden':''; ?>">&nbsp;</td>
+			<tr<?php if ( ! $even ) echo " class='alternate'"; $even = ! $even; ?>>
+		<?php
+		foreach ( $columns as $column => $column_title ) {
+			$classes = array($column, "column-$column");
+			if ( in_array($column, $hidden) ) $classes[] = 'hidden';
+
+			switch ($column) {
+				case 'cb':
+				?>
+					<th scope='row' class='check-column'><input type='checkbox' name='selected[]' value='<?php echo esc_attr($Category->id); ?>' /></th>
+				<?php
+				break;
+
+				case 'name':
+					$adminurl = add_query_arg(array_merge($_GET, array('page' => $this->Admin->pagename('categories'))), admin_url('admin.php'));
+					$editurl = wp_nonce_url(add_query_arg('id', $Category->id, $adminurl), 'shopp_categories_manager');
+					$deleteurl = wp_nonce_url(add_query_arg('action', 'delete', $editurl), 'shopp_categories_manager');
+
+					$CategoryName = empty($Category->name) ? '('.Shopp::__('no category name').')' : $Category->name;
+
+				?>
+					<td class="<?php echo esc_attr(join(' ',$classes)); ?>"><a class='row-title' href='<?php echo $editurl; ?>' title='<?php _e('Edit','Shopp'); ?> &quot;<?php echo esc_attr($CategoryName); ?>&quot;'><?php echo str_repeat("&#8212; ",$Category->level); echo esc_html($CategoryName); ?></a>
+						<div class="row-actions">
+							<span class='edit'><a href="<?php echo esc_url($editurl); ?>" title="<?php _e('Edit','Shopp'); ?> &quot;<?php echo esc_attr($CategoryName); ?>&quot;"><?php _e('Edit','Shopp'); ?></a> | </span>
+							<span class='delete'><a class='submitdelete' title='<?php _e('Delete','Shopp'); ?> &quot;<?php echo esc_attr($CategoryName); ?>&quot;' href="<?php echo esc_url($deleteurl); ?>" rel="<?php echo $Category->id; ?>"><?php _e('Delete','Shopp'); ?></a> | </span>
+							<span class='view'><a href="<?php shopp($Category, 'url'); ?>" title="<?php _e('View','Shopp'); ?> &quot;<?php echo esc_attr($CategoryName); ?>&quot;" rel="permalink" target="_blank"><?php _e('View','Shopp'); ?></a></span>
+						</div>
+					</td>
+				<?php
+				break;
+
+				case 'slug':
+				?>
+					<td class="<?php echo esc_attr(join(' ',$classes)); ?>"><?php echo $Category->slug; ?></td>
+				<?php
+				break;
+
+				case 'products':
+					$classes[] = 'num';
+				?>
+					<td width="5%" class="<?php echo esc_attr(join(' ',$classes)); ?>"><?php echo $Category->count; ?></td>
+				<?php
+				break;
+
+				case 'templates':
+					$classes[] = 'num';
+					$enabled = isset($Category->spectemplates) && Shopp::str_true($Category->spectemplates);
+					$title = $enabled ? Shopp::__('Product detail templates enabled') : '';
+				?>
+					<td width="5%" class="<?php echo esc_attr(join(' ',$classes)); ?>">
+						<div class="checkbox<?php echo $enabled ? ' checked': ''; ?>" title="<?php echo $title; ?>"><span class="hidden"><?php echo $title; ?></div>
+					</td>
+				<?php
+				break;
+
+				case 'menus':
+					$classes[] = 'num';
+					$enabled = isset($Category->facetedmenus) && Shopp::str_true($Category->facetedmenus);
+					$title = $enabled ? Shopp::__('Faceted search menus enabled') : '';
+				?>
+					<td width="5%" class="<?php echo esc_attr(join(' ',$classes)); ?>">
+						<div class="checkbox<?php echo $enabled ? ' checked': ''; ?>" title="<?php echo $title; ?>"><span class="hidden"><?php echo $title; ?></div>
+					</td>
+				<?php
+				break;
+
+				default:
+				?>
+					<td class="<?php echo esc_attr(join(' ',$classes)); ?>">
+				<?php
+					do_action( 'shopp_manage_categories_custom_column', $column, $Category );
+					do_action( 'manage_'.ProductCategory::$taxon.'_custom_column', $column, $Category );
+				?>
+					</td>
+				<?php
+				break;
+
+			}
+
+		} /* $columns */
+		?>
 		</tr>
-		<?php endforeach; ?>
+		<?php endforeach; /* $Categories */ ?>
 		</tbody>
 	<?php else: ?>
-		<tbody><tr><td colspan="6"><?php _e('No categories found.','Shopp'); ?></td></tr></tbody>
+		<tbody><tr><td colspan="6"><?php Shopp::_e('No categories found.'); ?></td></tr></tbody>
 	<?php endif; ?>
 	</table>
 	</form>
-	<div class="tablenav">
-		<?php if ($page_links) echo "<div class='tablenav-pages'>$page_links</div>"; ?>
-		<div class="clear"></div>
-	</div>
+	<div class="tablenav"><?php $ListTable->pagination( 'bottom' ); ?></div>
 </div>
 
 <script type="text/javascript">
-jQuery(document).ready( function() {
+jQuery(document).ready(function($) {
 
-	var $ = jQuery.noConflict();
+	columns.init(pagenow);
 
 	$('#selectall').change( function() {
 		$('#categories-table th input').each( function () {
-			if (this.checked) this.checked = false;
+			if ( this.checked ) this.checked = false;
 			else this.checked = true;
 		});
 	});
 
-	$('a.submitdelete').click(function () {
-		if (confirm("<?php _e('You are about to delete this category!\n \'Cancel\' to stop, \'OK\' to delete.','Shopp'); ?>")) {
-			$('<input type="hidden" name="delete[]" />').val($(this).attr('rel')).appendTo('#categories');
-			$('<input type="hidden" name="deleting" />').val('category').appendTo('#categories');
-			$('#categories').submit();
-			return false;
-		} else return false;
+	$('#categories-table a.submitdelete').click(function () {
+		if (confirm("<?php Shopp::_e('You are about to delete this category!\n \'Cancel\' to stop, \'OK\' to delete.'); ?>"))
+			window.location = $(this).attr('href');
+		return false;
 	});
-
-	$('#delete-button').click(function() {
-		if (confirm("<?php echo addslashes(__('Are you sure you want to delete the selected categories?','Shopp')); ?>")) {
-			$('<input type="hidden" name="categories" value="list" />').appendTo($('#categories'));
-			return true;
-		} else return false;
-	});
-
-	pagenow = 'shopp_page_shopp-categories';
-	columns.init(pagenow);
 
 });
 </script>
