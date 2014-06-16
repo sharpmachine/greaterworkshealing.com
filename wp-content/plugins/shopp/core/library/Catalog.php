@@ -37,12 +37,12 @@ class ShoppCatalog {
 	 **/
 	public function load_categories ( array $loading = array(), $showsmart = false, $results = false ) {
 
-		$terms = get_terms(ProductCategory::$taxon);
+		$terms = get_terms(ProductCategory::$taxon, $loading);
 
-		foreach ($terms as $term)
+		foreach ( (array)$terms as $term )
 			$this->categories[] = new ProductCategory($term);
 
-		if ($showsmart == "before" || $showsmart == "after")
+		if ( in_array($showsmart, array('before', 'after')) )
 			$this->collections($showsmart);
 
 	}
@@ -108,7 +108,7 @@ class ShoppCatalog {
 	 * @param array $options (optional) Any shopp() tag-compatible options to pass on to smart categories
 	 * @return object The loaded Category object
 	 **/
-	static function load_collection ( string $slug, array $options = array() ) {
+	static function load_collection ( $slug, array $options = array() ) {
 		$Shopp = Shopp::object();
 
 		foreach ( (array)$Shopp->Collections as $Collection ) {

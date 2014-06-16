@@ -395,7 +395,7 @@ class ShoppCustomer extends ShoppDatabaseObject {
 		if ( isset($this->passhash) ) {
 			global $wpdb;
 			$wpdb->update( $wpdb->users, array('user_pass' => $this->passhash), array('ID' => $wpuser) );
-			error_log("updated pasword to the pre-hashed version");
+			error_log("updated password to the pre-hashed version");
 		}
 
 		if ( apply_filters('shopp_notify_new_wpuser', true) ) {
@@ -596,6 +596,7 @@ class ShoppCustomer extends ShoppDatabaseObject {
 			$prefix.'email' => __('Customer\'s Email Address','Shopp'),
 			$prefix.'phone' => __('Customer\'s Phone Number','Shopp'),
 			$prefix.'company' => __('Customer\'s Company','Shopp'),
+			$prefix.'type' => __('Customer Type','Shopp'),
 			$prefix.'marketing' => __('Customer\'s Marketing Preference','Shopp'),
 			// $prefix.'info' => __('Customer\'s Custom Information','Shopp'), @todo Re-enable by switching to customer meta data in 1.2
 			$prefix.'created' => __('Customer Created Date','Shopp'),

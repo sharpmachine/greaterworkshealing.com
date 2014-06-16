@@ -111,7 +111,6 @@ class ShoppOrder {
 		// Initialize/reinitalize the current location
 		add_action('shopp_init', array($this, 'locate'), 20);
 
-
 	}
 
 	function init () {
@@ -225,7 +224,7 @@ class ShoppOrder {
 		$locale = empty($this->Billing->locale) ? null : $this->Billing->locale;
 
 		$this->Tax->location($Address->country, $Address->state, $locale); // Update the ShoppTax working location
-
+		$this->Tax->customer($this->Customer);
 	}
 
 	/**
@@ -644,6 +643,7 @@ class ShoppOrder {
 	public function success () {
 
 		$this->purchase = $this->inprogress;
+		ShoppPurchase(new ShoppPurchase($this->purchase));
 		$this->inprogress = false;
 
 		do_action('shopp_order_success', ShoppPurchase());
@@ -778,12 +778,10 @@ class ShoppOrder {
 	 * @return void
 	 **/
 	public function securecard () {
-		if ( ! empty($this->Billing->card) && strlen($this->Billing->card) > 4 ) {
-			$this->Billing->card = substr($this->Billing->card, -4);
+		$this->Billing->card = '';
 
-			// Card data is truncated, switch the cart to normal mode
-			ShoppShopping()->secured(false);
-		}
+		// Card data is gone, switch the cart to normal mode
+		ShoppShopping()->secured(false);
 	}
 
 	/**

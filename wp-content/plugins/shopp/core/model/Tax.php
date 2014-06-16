@@ -87,7 +87,7 @@ class ShoppTax {
 			if ( ! $this->taxrules($rules, $logic) ) continue;
 
 			// Capture fall back tax rates
-			if ( empty($zone) && ( self::ALL == $country || self::EUVAT == $country) ) {
+			if ( empty($zone) && ( self::ALL == $country ) ) {
 				$fallbacks[] = $setting;
 				continue;
 			}
@@ -146,6 +146,8 @@ class ShoppTax {
 		foreach ( $unapply as $key )
 			$rates[ $key ]->amount = $rates[ $key ]->total = null;
 
+		if ( empty($settings) ) $rates = array();
+
 		$rates = apply_filters( 'shopp_cart_taxrate', $rates ); // @deprecated Use shopp_tax_rates
 		$rates = apply_filters( 'shopp_tax_rates', $rates );
 
@@ -160,9 +162,10 @@ class ShoppTax {
 	 * @param string $country The country code
 	 * @return boolean True if the country matches or false
 	 **/
-	protected function taxcountry ( string $country ) {
+	protected function taxcountry ( $country ) {
 		if ( empty($country) ) return false;
-		return apply_filters('shopp_tax_country', ( $this->address['country'] == $country || self::ALL == $country ),  $this->address['country'], $country);
+		$EU = self::EUVAT == $country && in_array($this->address['country'], Lookup::country_euvat());
+		return apply_filters('shopp_tax_country', ( self::ALL == $country || $EU || $this->address['country'] == $country ),  $this->address['country'], $country);
 	}
 
 	/**
@@ -174,7 +177,7 @@ class ShoppTax {
 	 * @param string $zone The name of the zone
 	 * @return boolean True if the zone matches or false
 	 **/
-	protected function taxzone ( string $zone ) {
+	protected function taxzone ( $zone ) {
 		if ( empty($zone) ) return true;
 		return ($this->address['zone'] == $zone);
 	}
@@ -188,27 +191,29 @@ class ShoppTax {
 	 * @param array $rules The list of tax rules to test
 	 * @return boolean True if the rules match enough to apply, false otherwise
 	 **/
-	protected function taxrules ( array $rules, string $logic ) {
+	protected function taxrules ( array $rules, $logic ) {
 		if ( empty($rules) ) return true;
 
 		$apply = false;
 		$matches = 0;
 
-		foreach ($rules as $rule) {
+		foreach ( $rules as $rule ) {
 			$match = false;
-
-			if ( false !== $this->Item && false !== strpos($rule['p'],'product') ) {
+			if ( is_a($this->Item, 'ShoppTaxableItem') && false !== strpos($rule['p'],'product') ) {
 				$match = $this->Item->taxrule($rule);
-			} elseif ( false !== strpos($rule['p'],'customer')) {
-				$match = $this->Customer->taxrule($rule);
+			} elseif ( is_a($this->Customer, 'ShoppCustomer') && false !== strpos($rule['p'],'customer') ) {
+				switch ( $rule['p'] ) {
+					case "customer-type": $match = strtolower($rule['v']) == strtolower($this->Customer->type); break;
+				}
 			}
 
-			if ($match) $matches++;
+			if ( $match ) $matches++;
 		}
-		if ( 'any' == $logic && $matches > 0) $apply = true;
+
+		if ( 'any' == $logic && $matches > 0 ) $apply = true;
 		if ( 'all' == $logic && count($rules) == $matches ) $apply = true;
 
-		return apply_filters('shopp_tax_rate_match_rule',$apply,$rule,$this);
+		return apply_filters('shopp_tax_rate_match_rule', $apply, $rule, $this);
 	}
 
 
@@ -241,8 +246,6 @@ class ShoppTax {
 		return $this->address;
 	}
 
-
-
 	/**
 	 * Sets the taxable location (address) for matching tax rates
 	 *
@@ -254,7 +257,7 @@ class ShoppTax {
 	 * @param string $locale (optional) The locale name
 	 * @return array An associative array containing the country, zone and locale
 	 **/
-	public function location ( string $country = null, string $state = null, string $locale = null ) {
+	public function location ( $country = null, $state = null, $locale = null ) {
 
 		$address = apply_filters('shopp_taxable_address', array(
 			'country' => $country,
@@ -262,9 +265,50 @@ class ShoppTax {
 			'locale' => $locale
 		));
 
-		$this->address = array_merge($this->address, array_filter($address));
+		$this->address = array_merge($this->address, array_filter($address, create_function('$e', 'return ! is_null($e);')));
 
 		return $this->address;
+	}
+
+	/**
+	 * Sets the working customer
+	 *
+	 * @author Jonathan Davis
+	 * @since 1.3
+	 *
+	 * @param ShoppCustomer	$Customer The session customer to use for Customer rule conditions
+	 * @return void
+	 **/
+	public function customer ( ShoppCustomer $Customer ) {
+		$this->Customer = $Customer;
+	}
+
+	public static function baserates ( $Item = null ) {
+		// Get base tax rate
+		$base = shopp_setting('base_operations');
+		$BaseTax = new ShoppTax;
+		$BaseTax->location($base['country'], false, false);
+
+		// Calculate the deduction
+		$baserates = array();
+		$BaseTax->rates($baserates, $BaseTax->item($Item));
+
+		return (array)$baserates;
+	}
+
+	public static function adjustment ( $rates ) {
+
+		if ( ! shopp_setting_enabled('tax_inclusive') ) return 1;
+
+		$baserates = ShoppTax::baserates();
+		$baserate = reset($baserates);
+		$appliedrate = reset($rates);
+
+		$baserate = isset($baserate->rate) ? $baserate->rate : 0;
+		$appliedrate = isset($appliedrate->rate) ? $appliedrate->rate : 0;
+
+		return 1 + ($baserate - $appliedrate);
+
 	}
 
 	/**
@@ -355,7 +399,7 @@ class ShoppTax {
 	 * @param array $rates the list of applicable ShoppItemTax entries
 	 * @return float $total
 	 **/
-	public function total ( array &$taxes, integer $quantity ) {
+	public function total ( array &$taxes, $quantity ) {
 
 		$total = 0;
 		foreach ( $taxes as $label => &$taxrate ) {
@@ -426,7 +470,7 @@ class ShoppTaxableItem {
 	 * @param string $value The value to match
 	 * @return boolean True if matched or false
 	 **/
-	private function ShoppCartItem ( string $property, string $value ) {
+	private function ShoppCartItem ( $property, $value ) {
 		$CartItem = $this->Object;
 		switch ( $property ) {
 			case 'product-name': return ($value == $CartItem->name); break;
@@ -446,7 +490,7 @@ class ShoppTaxableItem {
 	 * @param string $value The value to match
 	 * @return boolean True if matched or false
 	 **/
-	private function ShoppProduct ( string $property, string $value ) {
+	private function ShoppProduct ( $property, $value ) {
 		$Product = $this->Object;
 		switch ( $property ) {
 			case 'product-name': return ($value == $Product->name); break;

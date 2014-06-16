@@ -136,6 +136,7 @@ class ShoppAdminSystem extends ShoppAdminController {
 			wp_die(__('You do not have sufficient permissions to access this page.'));
 
 		$sub = 'settings';
+		$term_recount = false;
 		if (shopp_setting_enabled('shipping')) $sub = 'rates';
 		if ( isset($_GET['sub']) && in_array( $_GET['sub'],array_keys($this->subscreens) ) )
 			$sub = $_GET['sub'];
@@ -519,7 +520,7 @@ class ShoppAdminSystem extends ShoppAdminController {
 			$rates = stripslashes_deep($rates);
 			shopp_set_setting('taxrates',$rates);
 		}
-		if (isset($_POST['addrate'])) $_POSTedit = count($rates);
+		if (isset($_POST['addrate'])) $edit = count($rates);
 		if (isset($_POST['submit'])) $edit = false;
 
 		$base = shopp_setting('base_operations');
@@ -659,7 +660,7 @@ class ShoppAdminSystem extends ShoppAdminController {
 		if ( ! $active_gateways ) $gateways = array();
 		else $gateways = explode(',', $active_gateways);
 
-		$Gateways->settings();	// Load all installed gateways for settings UIs
+		$gateways = array_filter($gateways, array($Gateways, 'moduleclass'));
 
 		if ( ! empty($_GET['delete']) ) {
 			$delete = $_GET['delete'];
@@ -706,11 +707,11 @@ class ShoppAdminSystem extends ShoppAdminController {
 			$updated = __('Shopp payments settings saved.','Shopp');
 		}
 
-		$Gateways->settings();	// Reload all installed gateways for settings UIs
+		$Gateways->settings();	// Load all installed gateways for settings UIs
 		do_action('shopp_setup_payments_init');
 
 		$installed = array();
-		foreach($Gateways->modules as $slug => $module)
+		foreach ( (array)$Gateways->modules as $slug => $module )
 			$installed[$slug] = $module->name;
 
 		$edit = false;
