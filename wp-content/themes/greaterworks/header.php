@@ -50,7 +50,7 @@
 		<header>
 			<div id="logo"><a href="<?php bloginfo('url'); ?>"><img src="<?php bloginfo('template_directory'); ?>/images/logo.png" width="187" height="47" alt="Logo"></a></div>
 			<nav>
-				<?php wp_nav_menu( array( 'sort_column' => 'menu_order', 'container_class' => 'menu-header' ) ); ?>
+				<?php wp_nav_menu( array( 'sort_column' => 'menu_order', 'menu' => 'Primary Navigation', 'container_class' => 'menu-header' ) ); ?>
 			</nav>
 		</header>
 	</div>
