@@ -14,7 +14,7 @@ get_header(); ?>
 
 <?php wp_reset_query();?>
 	<?php wp_reset_query();?>
-	<?php query_posts("showposts=10"); ?>
+	<?php query_posts("showposts=-1"); ?>
 	<?php
 			/* Run the loop to output the posts.
 			 * If you want to overload this in a child theme then include a file
